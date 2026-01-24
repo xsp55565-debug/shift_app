@@ -1,124 +1,90 @@
 import streamlit as st
 import pandas as pd
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 from hijri_converter import convert
 
-# ---------------- CONFIG ----------------
-st.set_page_config(page_title="Shift Schedule", layout="wide")
-st.title("Shift Schedule")
+# --- Streamlit page config ---
+st.set_page_config(page_title="Shift Schedule App", layout="wide")
+st.title("Shift Schedule App")
 
-# ---------------- GROUP SETTINGS ----------------
-GROUP_START = {
-    "A": date(2026, 1, 23),
-    "B": date(2026, 1, 18),
-    "C": date(2026, 1, 25),  # Today night
-    "D": date(2026, 1, 30),
+# --- Groups and default start dates ---
+groups = ["A", "B", "C", "D"]
+default_group_index = groups.index("B")  # Default group is B
+group = st.selectbox("Select Group:", groups, index=default_group_index)
+
+# Default start dates for each group (adjust as needed)
+start_dates = {
+    "A": datetime(2026, 1, 18),
+    "B": datetime(2026, 1, 18),
+    "C": datetime(2026, 1, 25),
+    "D": datetime(2026, 2, 1)
 }
 
-SHIFT_CYCLE = (
-    ["Night"] * 7 +
-    ["Off"] * 2 +
-    ["Evening"] * 7 +
-    ["Off"] * 2 +
-    ["Morning"] * 7 +
-    ["Off"] * 3
-)
+start_date = st.date_input("Select Start Date:", start_dates[group])
+st.write("Selected Group:", group)
+st.write("Start Date:", start_date.strftime("%d-%m-%Y"))
 
-SHIFT_COLORS = {
-    "Morning": "#FFF59D",
-    "Evening": "#FFCC80",
-    "Night": "#90CAF9",
-    "Off": "#E0E0E0",
-}
+# --- Select a specific date to check shift ---
+check_date = st.date_input("Check Shift on Date:", datetime.today())
+hijri_date = convert.Gregorian(check_date.year, check_date.month, check_date.day).to_hijri()
+st.write(f"Selected Date Hijri: {hijri_date.day}-{hijri_date.month}-{hijri_date.year}")
 
-RAMADAN_COLOR = "#CE93D8"
-EID_COLOR = "#A5D6A7"
+# --- Create the schedule ---
+schedule = []
 
-# ---------------- USER INPUT ----------------
-group = st.selectbox("Select Group", ["A", "B", "C", "D"], index=2)
-selected_date = st.date_input("Select Date", date.today())
+def add_shifts(start, shift_type, days):
+    for i in range(days):
+        date = start + timedelta(days=i)
+        schedule.append({
+            "Date": date,
+            "Shift": shift_type,
+            "Color": {
+                "Morning": "yellow",
+                "Evening": "orange",
+                "Night": "lightblue",
+                "Off": "lightgray"
+            }[shift_type]
+        })
 
-# ---------------- CALCULATE SHIFT ----------------
-start_date = GROUP_START[group]
-days_diff = (selected_date - start_date).days
-shift = SHIFT_CYCLE[days_diff % len(SHIFT_CYCLE)]
+current_date = start_date
+while current_date < start_date + timedelta(days=365):
+    # Night shift: 7 days
+    add_shifts(current_date, "Night", 7)
+    current_date += timedelta(days=7)
+    # Off: 2 days
+    add_shifts(current_date, "Off", 2)
+    current_date += timedelta(days=2)
+    # Evening shift: 7 days
+    add_shifts(current_date, "Evening", 7)
+    current_date += timedelta(days=7)
+    # Off: 2 days
+    add_shifts(current_date, "Off", 2)
+    current_date += timedelta(days=2)
+    # Morning shift: 7 days
+    add_shifts(current_date, "Morning", 7)
+    current_date += timedelta(days=7)
+    # Off: 3 days
+    add_shifts(current_date, "Off", 3)
+    current_date += timedelta(days=3)
 
-# ---------------- HIJRI DATE ----------------
-hijri = convert.Gregorian(
-    selected_date.year,
-    selected_date.month,
-    selected_date.day
-).to_hijri()
+# --- Convert to DataFrame ---
+df = pd.DataFrame(schedule)
+df["Date"] = pd.to_datetime(df["Date"])
+df_display = df.copy()
+df_display["Date"] = df_display["Date"].dt.strftime("%a, %d-%m-%Y")
 
-hijri_text = f"{hijri.day}-{hijri.month}-{hijri.year}"
+# --- Highlight colors ---
+def color_rows(row):
+    return [f"background-color: {row['Color']}"] * len(row)
 
-# Ramadan & Eid detection
-is_ramadan = hijri.month == 9
-is_eid = hijri.month == 10 and hijri.day <= 4
+# --- Show full schedule ---
+st.subheader("Full Schedule")
+st.dataframe(df_display.style.apply(color_rows, axis=1), use_container_width=True)
 
-# ---------------- DISPLAY RESULT ----------------
-color = SHIFT_COLORS[shift]
-label = "Shift"
-
-if is_ramadan:
-    color = RAMADAN_COLOR
-    label = "Ramadan Shift"
-
-if is_eid:
-    color = EID_COLOR
-    label = "Eid Shift"
-
-st.markdown(
-    f"""
-    <div style="
-        background-color:{color};
-        padding:20px;
-        border-radius:12px;
-        text-align:center;
-        font-size:24px;
-        font-weight:bold;
-    ">
-        {label}: {shift}<br>
-        Hijri Date: {hijri_text}
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# ---------------- FULL YEAR TABLE ----------------
-st.divider()
-st.subheader("Full Year Schedule")
-
-rows = []
-for i in range(365):
-    d = start_date + timedelta(days=i)
-    s = SHIFT_CYCLE[i % len(SHIFT_CYCLE)]
-    h = convert.Gregorian(d.year, d.month, d.day).to_hijri()
-
-    special = ""
-    bg = SHIFT_COLORS[s]
-
-    if h.month == 9:
-        special = "Ramadan"
-        bg = RAMADAN_COLOR
-    if h.month == 10 and h.day <= 4:
-        special = "Eid"
-        bg = EID_COLOR
-
-    rows.append({
-        "Date": d.strftime("%Y-%m-%d"),
-        "Hijri": f"{h.day}-{h.month}-{h.year}",
-        "Shift": s,
-        "Special": special,
-        "bg": bg
-    })
-
-df = pd.DataFrame(rows)
-
-def style_rows(row):
-    return [f"background-color:{row.bg}"] * len(row)
-
-st.dataframe(
-    df.drop(columns=["bg"]).style.apply(style_rows, axis=1),
-    use_container_width=True
-)
+# --- Show shift for selected date ---
+shift_on_date = df[df["Date"] == pd.to_datetime(check_date)]
+if not shift_on_date.empty:
+    st.subheader("Shift on Selected Date")
+    st.write(shift_on_date[["Date", "Shift"]].reset_index(drop=True))
+else:
+    st.write("No shift found for this date.")
