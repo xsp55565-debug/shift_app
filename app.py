@@ -1,78 +1,78 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 st.set_page_config(page_title="Shift Schedule App", layout="wide")
 st.title("Shift Schedule App")
 
-# --------------------
-# Group configuration
-# --------------------
+# ---- GROUP START DATES (ALL START WITH NIGHT) ----
+today = date.today()
+
+group_start_dates = {
+    "A": date(2026, 1, 1),
+    "B": date(2026, 1, 18),
+    "C": today,          # Group C starts TODAY on Night
+    "D": date(2026, 2, 1)
+}
+
 groups = ["A", "B", "C", "D"]
+default_group = "B"
 
-group_offsets = {
-    "A": 0,
-    "B": 7,
-    "C": 14,  # Group C starts Night today
-    "D": 21
-}
+group = st.selectbox("Select Group", groups, index=groups.index(default_group))
+start_date = group_start_dates[group]
 
-selected_group = st.selectbox("Select Group", groups, index=groups.index("C"))
+st.write("Group:", group)
+st.write("Cycle Start Date:", start_date.strftime("%d-%m-%Y"))
 
-today = datetime.today().date()
-start_date = st.date_input("Start Date", today)
-
-# --------------------
-# Shift cycle
-# --------------------
-shift_cycle = [
-    ("Night", 7),
-    ("Off", 2),
-    ("Evening", 7),
-    ("Off", 2),
-    ("Morning", 7),
-    ("Off", 3),
-]
-
-shift_colors = {
-    "Morning": "#FFF59D",
-    "Evening": "#FFCC80",
-    "Night": "#90CAF9",
-    "Off": "#E0E0E0"
-}
-
-# --------------------
-# Build schedule
-# --------------------
+# ---- BUILD SHIFT CYCLE ----
 schedule = []
 
-cycle_start = start_date - timedelta(days=group_offsets[selected_group])
-current_date = cycle_start
+def add_shifts(start, shift_type, days):
+    for i in range(days):
+        d = start + timedelta(days=i)
+        schedule.append({
+            "Date": d,
+            "Shift": shift_type,
+            "Color": {
+                "Morning": "#FFF59D",
+                "Evening": "#FFCC80",
+                "Night": "#81D4FA",
+                "Off": "#E0E0E0"
+            }[shift_type]
+        })
 
-while current_date < start_date + timedelta(days=365):
-    for shift_name, duration in shift_cycle:
-        for i in range(duration):
-            day = current_date + timedelta(days=i)
-            if day >= start_date:
-                schedule.append({
-                    "Date": day,
-                    "Shift": shift_name,
-                    "Color": shift_colors[shift_name]
-                })
-        current_date += timedelta(days=duration)
+current_date = start_date
+end_date = start_date + timedelta(days=365)
 
-# --------------------
-# DataFrame
-# --------------------
+while current_date < end_date:
+    add_shifts(current_date, "Night", 7)
+    current_date += timedelta(days=7)
+
+    add_shifts(current_date, "Off", 2)
+    current_date += timedelta(days=2)
+
+    add_shifts(current_date, "Evening", 7)
+    current_date += timedelta(days=7)
+
+    add_shifts(current_date, "Off", 2)
+    current_date += timedelta(days=2)
+
+    add_shifts(current_date, "Morning", 7)
+    current_date += timedelta(days=7)
+
+    add_shifts(current_date, "Off", 3)
+    current_date += timedelta(days=3)
+
+# ---- DATAFRAME ----
 df = pd.DataFrame(schedule)
 df["Date"] = pd.to_datetime(df["Date"])
+
 df_display = df.copy()
 df_display["Date"] = df_display["Date"].dt.strftime("%a %d-%m-%Y")
 
 def color_rows(row):
     return [f"background-color: {row['Color']}"] * len(row)
 
-st.subheader(f"Group {selected_group} - 1 Year Schedule")
 st.dataframe(
     df_display.style.apply(color_rows, axis=1),
     use_container_width=True
