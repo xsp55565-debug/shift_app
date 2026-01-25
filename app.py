@@ -3,27 +3,37 @@ import pandas as pd
 from hijri_converter import convert
 from datetime import datetime, timedelta
 
-st.set_page_config(page_title="Yearly Shift Schedule", layout="wide")
-st.title("Yearly Shift Schedule")
+st.set_page_config(page_title="Shift Schedule", layout="wide")
+st.title("Shift Schedule")
 
-# --- Prepare shift data ---
-start_date = datetime(2026, 1, 25)
-num_days = 30
+# --- Shift groups ---
+groups = ["C", "B"]
 shifts = ["Morning", "Evening", "Night"]
 
-data = []
-for i in range(num_days):
-    date = start_date + timedelta(days=i)
-    shift = shifts[i % 3]
-    hijri_date = convert.Gregorian(date.year, date.month, date.day).to_hijri()
-    hijri_str = f"{hijri_date.day}/{hijri_date.month}/{hijri_date.year}H"
-    data.append({
-        "Gregorian Date": date.strftime("%Y-%m-%d"),
-        "Hijri Date": hijri_str,
-        "Shift": shift
-    })
+start_dates = {
+    "C": datetime(2026, 1, 25),  # start for C
+    "B": datetime(2026, 1, 24)   # start for B
+}
 
-df = pd.DataFrame(data)
+num_days = 30
+
+all_data = []
+
+for group in groups:
+    start_date = start_dates[group]
+    for i in range(num_days):
+        date = start_date + timedelta(days=i)
+        shift = shifts[i % 3]
+        hijri_date = convert.Gregorian(date.year, date.month, date.day).to_hijri()
+        hijri_str = f"{hijri_date.day}/{hijri_date.month}/{hijri_date.year}H"
+        all_data.append({
+            "Group": group,
+            "Gregorian Date": date.strftime("%Y-%m-%d"),
+            "Hijri Date": hijri_str,
+            "Shift": shift
+        })
+
+df = pd.DataFrame(all_data)
 
 # --- Color shifts ---
 def color_shifts(val):
@@ -56,7 +66,7 @@ def color_hijri(val):
     except:
         return ""
 
-# --- Display dataframe ---
+# --- Display dataframe with styling ---
 st.dataframe(
     df.style.applymap(color_shifts, subset=["Shift"])
            .applymap(color_hijri, subset=["Hijri Date"])
