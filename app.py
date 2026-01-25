@@ -6,20 +6,25 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="Shift Schedule", layout="wide")
 st.title("Shift Schedule")
 
-# --- Shift groups ---
+# --- Shift groups and shifts ---
 groups = ["C", "B"]
 shifts = ["Morning", "Evening", "Night"]
 
 start_dates = {
-    "C": datetime(2026, 1, 25),  # start for C
-    "B": datetime(2026, 1, 24)   # start for B
+    "C": datetime(2026, 1, 25),
+    "B": datetime(2026, 1, 24)
 }
 
 num_days = 30
 
+# --- Select group ---
+selected_group = st.selectbox("Select your group:", groups)
+
 all_data = []
 
 for group in groups:
+    if group != selected_group:
+        continue
     start_date = start_dates[group]
     for i in range(num_days):
         date = start_date + timedelta(days=i)
