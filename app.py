@@ -1,75 +1,59 @@
 import streamlit as st
 import pandas as pd
+from hijri_converter import convert
 from datetime import datetime, timedelta
-from hijri_converter import Gregorian
 
-st.set_page_config(page_title="Shift Schedule App", layout="wide")
-st.title("Shift Schedule App")
+st.set_page_config(page_title="Yearly Shift Schedule", layout="wide")
 
-# --- Select Group and Start Date ---
-groups = ["A", "B", "C", "D"]
-default_group_index = groups.index("B")
-group = st.selectbox("Select Group:", groups, index=default_group_index)
+st.title("Yearly Shift Schedule")
 
-start_date = st.date_input("Select Start Date:", datetime(2026, 1, 25))
-st.write("Selected Group:", group)
-st.write("Start Date:", start_date.strftime("%d-%m-%Y"))
+# --- Prepare shift data ---
+start_date = datetime(2026, 1, 25)
+num_days = 30  # Number of days to display
+shifts = ["Morning", "Evening", "Night"]
 
-# --- Create the annual schedule ---
-schedule = []
+data = []
+for i in range(num_days):
+    date = start_date + timedelta(days=i)
+    shift = shifts[i % 3]
+    hijri_date = convert.Gregorian(date.year, date.month, date.day).to_hijri()
+    hijri_str = f"{hijri_date.day}/{hijri_date.month}/{hijri_date.year}H"
+    data.append({
+        "Gregorian Date": date.strftime("%Y-%m-%d"),
+        "Hijri Date": hijri_str,
+        "Shift": shift
+    })
 
-# Function to add shifts
-def add_shifts(start, shift_type, days):
-    colors = {
-        "Morning": "lightyellow",
-        "Evening": "lightsalmon",
-        "Night": "lightblue",
-        "Off": "lightgray"
-    }
-    for i in range(days):
-        date = start + timedelta(days=i)
-        hijri_date = Gregorian(date.year, date.month, date.day).to_hijri()
-        hijri_str = f"{hijri_date.day}-{hijri_date.month}-{hijri_date.year}"
-        schedule.append({
-            "Gregorian": date.strftime("%d-%m-%Y"),
-            "Hijri": hijri_str,
-            "Shift": shift_type,
-            "Color": colors[shift_type]
-        })
+df = pd.DataFrame(data)
 
-# Build the schedule for 1 year
-current_date = start_date
-while current_date < start_date + timedelta(days=365):
-    add_shifts(current_date, "Night", 7)
-    current_date += timedelta(days=7)
-    add_shifts(current_date, "Off", 2)
-    current_date += timedelta(days=2)
-    add_shifts(current_date, "Evening", 7)
-    current_date += timedelta(days=7)
-    add_shifts(current_date, "Off", 2)
-    current_date += timedelta(days=2)
-    add_shifts(current_date, "Morning", 7)
-    current_date += timedelta(days=7)
-    add_shifts(current_date, "Off", 3)
-    current_date += timedelta(days=3)
-
-# Convert to DataFrame
-df = pd.DataFrame(schedule)
-
-# --- Highlight rows by shift ---
-def color_rows(row):
-    return [f"background-color: {row['Color']}"] * len(row)
-
-# --- Display the schedule ---
-st.dataframe(df.style.apply(color_rows, axis=1), use_container_width=True)
-
-# --- Allow checking shift by date ---
-check_date = st.date_input("Check your shift for a specific date:")
-if check_date:
-    match = df[df["Gregorian"] == check_date.strftime("%d-%m-%Y")]
-    if not match.empty:
-        shift = match.iloc[0]["Shift"]
-        hijri = match.iloc[0]["Hijri"]
-        st.success(f"Your shift on {check_date.strftime('%d-%m-%Y')} (Hijri {hijri}) is: {shift}")
+# --- Function to color only the shift words ---
+def color_shifts(val):
+    if val == "Morning":
+        return "color: blue; font-weight: bold"
+    elif val == "Evening":
+        return "color: orange; font-weight: bold"
+    elif val == "Night":
+        return "color: purple; font-weight: bold"
     else:
-        st.warning("No shift found for this date.")
+        return ""
+
+# --- Highlight Ramadan and Eid on Hijri dates ---
+def highlight_holidays(row):
+    hijri_parts = row["Hijri Date"].split("/")
+    day, month, year = int(hijri_parts[0]), int(hijri_parts[1]), int(hijri_parts[2].replace("H",""))
+    # Ramadan = month 9
+    # Eid al-Fitr = 10/1 to 10/3, Eid al-Adha = 12/10 to 12/12
+    if month == 9:
+        return ["background-color: #FFF2CC" if col in ["Hijri Date","Gregorian Date"] else "" for col in row.index]
+    elif month == 10 and 1 <= day <= 3:
+        return ["background-color: #FFD966" if col in ["Hijri Date","Gregorian Date"] else "" for col in row.index]
+    elif month == 12 and 10 <= day <= 12:
+        return ["background-color: #FFD966" if col in ["Hijri Date","Gregorian Date"] else "" for col in row.index]
+    else:
+        return [""] * len(row)
+
+# --- Display the table ---
+st.dataframe(
+    df.style.applymap(color_shifts, subset=["Shift"])
+           .apply(highlight_holidays, axis=1)
+)
