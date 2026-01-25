@@ -19,7 +19,7 @@ ROTATION = [
 ]
 
 HOLIDAYS_HIJRI = [
-    (9, 1, "Ramadan"),     # Ramadan start
+    (9, 1, "Ramadan"),     # بداية رمضان
     (10, 1, "Eid al-Fitr"), 
     (12, 10, "Eid al-Adha")
 ]
@@ -37,6 +37,11 @@ HOLIDAY_COLOR = {
     "Eid al-Adha": "blue"
 }
 
+RAMADAN_MONTH = 9
+RAMADAN_DAYS = range(1, 31)  # كامل أيام رمضان
+EID_FTR_MONTH, EID_FTR_DAYS = 10, range(1,4)  # عيد الفطر 3 أيام
+EID_ADHA_MONTH, EID_ADHA_DAYS = 12, range(10,13)  # عيد الأضحى 3 أيام
+
 # --- HELPER FUNCTIONS ---
 def generate_schedule(start_date, days=365):
     schedule = []
@@ -48,10 +53,14 @@ def generate_schedule(start_date, days=365):
         current_date = start_date + timedelta(days=i)
         hijri_date = Gregorian(current_date.year, current_date.month, current_date.day).to_hijri()
         holiday_name = None
-        for month, day, name in HOLIDAYS_HIJRI:
-            if hijri_date.month == month and hijri_date.day == day:
-                holiday_name = name
-                break
+        # Check if today is holiday
+        if hijri_date.month == RAMADAN_MONTH and hijri_date.day in RAMADAN_DAYS:
+            holiday_name = "Ramadan"
+        elif hijri_date.month == EID_FTR_MONTH and hijri_date.day in EID_FTR_DAYS:
+            holiday_name = "Eid al-Fitr"
+        elif hijri_date.month == EID_ADHA_MONTH and hijri_date.day in EID_ADHA_DAYS:
+            holiday_name = "Eid al-Adha"
+
         hijri_str = f"{hijri_date.day}-{hijri_date.month}-{hijri_date.year}"
         schedule.append({
             "Date (Gregorian)": current_date.strftime("%Y-%m-%d"),
@@ -59,6 +68,7 @@ def generate_schedule(start_date, days=365):
             "Shift": rotation_type,
             "Holiday": holiday_name
         })
+
         rotation_day_count += 1
         if rotation_day_count >= rotation_length:
             rotation_index = (rotation_index + 1) % len(ROTATION)
@@ -72,9 +82,11 @@ def style_schedule(row):
     color = COLOR_MAP.get(row["Shift"], "#ffffff")
     for col in row.index:
         styles.append(f"background-color: {color}")
-    # Highlight holiday on Hijri date
-    if row["Holiday"]:
-        styles[row.index.get_loc("Date (Hijri)")] = f"color: {HOLIDAY_COLOR[row['Holiday']]}; font-weight: bold"
+    # Highlight holidays or Ramadan on Hijri date
+    if row["Holiday"] == "Ramadan":
+        styles[row.index.get_loc("Date (Hijri)")] = "color: red; font-weight: bold"
+    elif row["Holiday"] in ["Eid al-Fitr", "Eid al-Adha"]:
+        styles[row.index.get_loc("Date (Hijri)")] = "color: blue; font-weight: bold"
     return styles
 
 # --- STREAMLIT APP ---
