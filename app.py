@@ -19,9 +19,9 @@ ROTATION = [
 ]
 
 HOLIDAYS_HIJRI = [
-    (9, 1),  # Ramadan start
-    (10, 1), # Eid al-Fitr
-    (12, 10) # Eid al-Adha
+    (9, 1, "Ramadan"),     # Ramadan start
+    (10, 1, "Eid al-Fitr"), 
+    (12, 10, "Eid al-Adha")
 ]
 
 COLOR_MAP = {
@@ -29,6 +29,12 @@ COLOR_MAP = {
     "Morning": "#2ca02c",
     "Evening": "#ff7f0e",
     "OFF": "#ffffff"
+}
+
+HOLIDAY_COLOR = {
+    "Ramadan": "red",
+    "Eid al-Fitr": "blue",
+    "Eid al-Adha": "blue"
 }
 
 # --- HELPER FUNCTIONS ---
@@ -40,13 +46,18 @@ def generate_schedule(start_date, days=365):
 
     for i in range(days):
         current_date = start_date + timedelta(days=i)
-        # Hijri date
         hijri_date = Gregorian(current_date.year, current_date.month, current_date.day).to_hijri()
-        is_holiday = (hijri_date.month, hijri_date.day) in HOLIDAYS_HIJRI
+        holiday_name = None
+        for month, day, name in HOLIDAYS_HIJRI:
+            if hijri_date.month == month and hijri_date.day == day:
+                holiday_name = name
+                break
+        hijri_str = f"{hijri_date.day}-{hijri_date.month}-{hijri_date.year}"
         schedule.append({
             "Date (Gregorian)": current_date.strftime("%Y-%m-%d"),
-            "Date (Hijri)": f"{hijri_date.day}-{hijri_date.month}-{hijri_date.year}" + (" 🎉" if is_holiday else ""),
-            "Shift": rotation_type
+            "Date (Hijri)": hijri_str,
+            "Shift": rotation_type,
+            "Holiday": holiday_name
         })
         rotation_day_count += 1
         if rotation_day_count >= rotation_length:
@@ -55,9 +66,16 @@ def generate_schedule(start_date, days=365):
             rotation_day_count = 0
     return pd.DataFrame(schedule)
 
-def color_shifts(row):
+def style_schedule(row):
+    styles = []
+    # Shift background
     color = COLOR_MAP.get(row["Shift"], "#ffffff")
-    return [f"background-color: {color}"]*len(row)
+    for col in row.index:
+        styles.append(f"background-color: {color}")
+    # Highlight holiday on Hijri date
+    if row["Holiday"]:
+        styles[row.index.get_loc("Date (Hijri)")] = f"color: {HOLIDAY_COLOR[row['Holiday']]}; font-weight: bold"
+    return styles
 
 # --- STREAMLIT APP ---
 st.title("Yearly Shift Schedule")
@@ -66,4 +84,4 @@ group_selected = st.selectbox("Select Your Group:", list(GROUPS.keys()))
 
 df = generate_schedule(GROUPS[group_selected])
 
-st.dataframe(df.style.apply(color_shifts, axis=1))
+st.dataframe(df.style.apply(style_schedule, axis=1))
