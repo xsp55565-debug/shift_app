@@ -11,8 +11,8 @@ groups = ["C", "B"]
 shifts = ["Morning", "Evening", "Night"]
 
 start_dates = {
-    "C": datetime(2026, 1, 25),
-    "B": datetime(2026, 1, 24)
+    "C": datetime(2026, 1, 25),  # Group C starts Jan 25
+    "B": datetime(2026, 1, 24)   # Group B starts Jan 24
 }
 
 num_days = 30
