@@ -1,78 +1,69 @@
 import streamlit as st
 import pandas as pd
-from hijri_converter import convert
 from datetime import datetime, timedelta
+from hijri_converter import Gregorian
 
-st.set_page_config(page_title="Shift Schedule", layout="wide")
-st.title("Shift Schedule")
-
-# --- Shift groups and shifts ---
-groups = ["C", "B"]
-shifts = ["Morning", "Evening", "Night"]
-
-start_dates = {
-    "C": datetime(2026, 1, 25),  # Group C starts Jan 25
-    "B": datetime(2026, 1, 24)   # Group B starts Jan 24
+# --- CONFIGURATION ---
+GROUPS = {
+    "B": datetime(2026, 1, 18),  # B starts 18 Jan 2026 Night
+    "C": datetime(2026, 1, 25),  # C starts 25 Jan 2026 Night
 }
 
-num_days = 30
+ROTATION = [
+    ("Night", 7),  # 10PM - 6AM, 7 days
+    ("OFF", 2),
+    ("Evening", 7),  # 2PM - 10PM, 7 days
+    ("OFF", 2),
+    ("Morning", 7),  # 6AM - 2PM, 7 days
+    ("OFF", 3),
+]
 
-# --- Select group ---
-selected_group = st.selectbox("Select your group:", groups)
+HOLIDAYS_HIJRI = [
+    (9, 1),  # Ramadan start
+    (10, 1), # Eid al-Fitr
+    (12, 10) # Eid al-Adha
+]
 
-all_data = []
+COLOR_MAP = {
+    "Night": "#1f77b4",
+    "Morning": "#2ca02c",
+    "Evening": "#ff7f0e",
+    "OFF": "#ffffff"
+}
 
-for group in groups:
-    if group != selected_group:
-        continue
-    start_date = start_dates[group]
-    for i in range(num_days):
-        date = start_date + timedelta(days=i)
-        shift = shifts[i % 3]
-        hijri_date = convert.Gregorian(date.year, date.month, date.day).to_hijri()
-        hijri_str = f"{hijri_date.day}/{hijri_date.month}/{hijri_date.year}H"
-        all_data.append({
-            "Group": group,
-            "Gregorian Date": date.strftime("%Y-%m-%d"),
-            "Hijri Date": hijri_str,
-            "Shift": shift
+# --- HELPER FUNCTIONS ---
+def generate_schedule(start_date, days=365):
+    schedule = []
+    rotation_index = 0
+    rotation_day_count = 0
+    rotation_type, rotation_length = ROTATION[rotation_index]
+
+    for i in range(days):
+        current_date = start_date + timedelta(days=i)
+        # Hijri date
+        hijri_date = Gregorian(current_date.year, current_date.month, current_date.day).to_hijri()
+        is_holiday = (hijri_date.month, hijri_date.day) in HOLIDAYS_HIJRI
+        schedule.append({
+            "Date (Gregorian)": current_date.strftime("%Y-%m-%d"),
+            "Date (Hijri)": f"{hijri_date.day}-{hijri_date.month}-{hijri_date.year}" + (" 🎉" if is_holiday else ""),
+            "Shift": rotation_type
         })
+        rotation_day_count += 1
+        if rotation_day_count >= rotation_length:
+            rotation_index = (rotation_index + 1) % len(ROTATION)
+            rotation_type, rotation_length = ROTATION[rotation_index]
+            rotation_day_count = 0
+    return pd.DataFrame(schedule)
 
-df = pd.DataFrame(all_data)
+def color_shifts(row):
+    color = COLOR_MAP.get(row["Shift"], "#ffffff")
+    return [f"background-color: {color}"]*len(row)
 
-# --- Color shifts ---
-def color_shifts(val):
-    if val == "Morning":
-        return "color: blue; font-weight: bold"
-    elif val == "Evening":
-        return "color: orange; font-weight: bold"
-    elif val == "Night":
-        return "color: purple; font-weight: bold"
-    else:
-        return ""
+# --- STREAMLIT APP ---
+st.title("Yearly Shift Schedule")
 
-# --- Color Hijri date for Ramadan and Eid ---
-def color_hijri(val):
-    try:
-        parts = val.split("/")
-        day = int(parts[0])
-        month = int(parts[1])
-        # Ramadan
-        if month == 9:
-            return "color: green; font-weight: bold"
-        # Eid al-Fitr: 1 Shawwal
-        elif month == 10 and day == 1:
-            return "color: red; font-weight: bold"
-        # Eid al-Adha: 10 Dhu al-Hijjah
-        elif month == 12 and day == 10:
-            return "color: red; font-weight: bold"
-        else:
-            return ""
-    except:
-        return ""
+group_selected = st.selectbox("Select Your Group:", list(GROUPS.keys()))
 
-# --- Display dataframe with styling ---
-st.dataframe(
-    df.style.applymap(color_shifts, subset=["Shift"])
-           .applymap(color_hijri, subset=["Hijri Date"])
-)
+df = generate_schedule(GROUPS[group_selected])
+
+st.dataframe(df.style.apply(color_shifts, axis=1))
