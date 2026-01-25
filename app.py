@@ -3,50 +3,41 @@ import pandas as pd
 from datetime import datetime, timedelta
 from hijri_converter import Gregorian
 
-# --- Streamlit page setup ---
 st.set_page_config(page_title="Shift Schedule App", layout="wide")
 st.title("Shift Schedule App")
 
-# --- Groups selection ---
+# --- Select Group and Start Date ---
 groups = ["A", "B", "C", "D"]
-group = st.selectbox("Select Group:", groups, index=1)  # default B
+default_group_index = groups.index("B")
+group = st.selectbox("Select Group:", groups, index=default_group_index)
 
-# --- Start dates for each group ---
-group_start_dates = {
-    "A": datetime(2026, 1, 25),
-    "B": datetime(2026, 1, 18),
-    "C": datetime(2026, 1, 25),
-    "D": datetime(2026, 1, 18)
-}
-start_date = group_start_dates[group]
+start_date = st.date_input("Select Start Date:", datetime(2026, 1, 25))
 st.write("Selected Group:", group)
-st.write("Shift cycle start date:", start_date.strftime("%d-%m-%Y"))
+st.write("Start Date:", start_date.strftime("%d-%m-%Y"))
 
-# --- Optional: check shift for a specific date ---
-check_date = st.date_input("Check shift for a specific date:", datetime.today())
-
-# --- Create yearly shift schedule ---
+# --- Create the annual schedule ---
 schedule = []
 
+# Function to add shifts
 def add_shifts(start, shift_type, days):
+    colors = {
+        "Morning": "lightyellow",
+        "Evening": "lightsalmon",
+        "Night": "lightblue",
+        "Off": "lightgray"
+    }
     for i in range(days):
         date = start + timedelta(days=i)
-        hijri = Gregorian(date.year, date.month, date.day).to_hijri()
-        hijri_str = f"{hijri.day}-{hijri.month}-{hijri.year}"
-        
-        # Mark Ramadan (9th month) and Eid (1st and 10th month)
-        holiday_flag = ""
-        if hijri.month == 9:
-            holiday_flag = " (Ramadan)"
-        elif hijri.month in [1, 10]:
-            holiday_flag = " (Eid)"
-
+        hijri_date = Gregorian(date.year, date.month, date.day).to_hijri()
+        hijri_str = f"{hijri_date.day}-{hijri_date.month}-{hijri_date.year}"
         schedule.append({
-            "Date (Gregorian)": date.strftime("%d-%m-%Y"),
-            "Date (Hijri)": hijri_str + holiday_flag,
-            "Shift": shift_type
+            "Gregorian": date.strftime("%d-%m-%Y"),
+            "Hijri": hijri_str,
+            "Shift": shift_type,
+            "Color": colors[shift_type]
         })
 
+# Build the schedule for 1 year
 current_date = start_date
 while current_date < start_date + timedelta(days=365):
     add_shifts(current_date, "Night", 7)
@@ -62,16 +53,23 @@ while current_date < start_date + timedelta(days=365):
     add_shifts(current_date, "Off", 3)
     current_date += timedelta(days=3)
 
+# Convert to DataFrame
 df = pd.DataFrame(schedule)
 
-# --- Show full schedule for the selected group ---
-st.subheader(f"Full yearly schedule for group {group}")
-st.dataframe(df, use_container_width=True)
+# --- Highlight rows by shift ---
+def color_rows(row):
+    return [f"background-color: {row['Color']}"] * len(row)
 
-# --- Show shift for specific date ---
-specific_shift = df[df["Date (Gregorian)"] == check_date.strftime("%d-%m-%Y")]
-if not specific_shift.empty:
-    st.subheader(f"Shift on {check_date.strftime('%d-%m-%Y')}")
-    st.write(specific_shift.iloc[0])
-else:
-    st.write("No shift found for this date.")
+# --- Display the schedule ---
+st.dataframe(df.style.apply(color_rows, axis=1), use_container_width=True)
+
+# --- Allow checking shift by date ---
+check_date = st.date_input("Check your shift for a specific date:")
+if check_date:
+    match = df[df["Gregorian"] == check_date.strftime("%d-%m-%Y")]
+    if not match.empty:
+        shift = match.iloc[0]["Shift"]
+        hijri = match.iloc[0]["Hijri"]
+        st.success(f"Your shift on {check_date.strftime('%d-%m-%Y')} (Hijri {hijri}) is: {shift}")
+    else:
+        st.warning("No shift found for this date.")
