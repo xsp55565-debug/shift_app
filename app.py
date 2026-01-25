@@ -18,11 +18,12 @@ ROTATION = [
     ("OFF", 3),
 ]
 
-HOLIDAYS_HIJRI = [
-    (9, 1, "Ramadan"),     # بداية رمضان
-    (10, 1, "Eid al-Fitr"), 
-    (12, 10, "Eid al-Adha")
-]
+# Hijri holidays
+RAMADAN_MONTH = 9
+RAMADAN_DAYS = range(1, 31)  # كامل أيام رمضان
+
+EID_FTR_MONTH, EID_FTR_DAYS = 10, range(1, 6)  # عيد الفطر 5 أيام
+EID_ADHA_MONTH, EID_ADHA_DAYS = 12, range(10, 15)  # عيد الأضحى 5 أيام
 
 COLOR_MAP = {
     "Night": "#1f77b4",
@@ -37,11 +38,6 @@ HOLIDAY_COLOR = {
     "Eid al-Adha": "blue"
 }
 
-RAMADAN_MONTH = 9
-RAMADAN_DAYS = range(1, 31)  # كامل أيام رمضان
-EID_FTR_MONTH, EID_FTR_DAYS = 10, range(1,4)  # عيد الفطر 3 أيام
-EID_ADHA_MONTH, EID_ADHA_DAYS = 12, range(10,13)  # عيد الأضحى 3 أيام
-
 # --- HELPER FUNCTIONS ---
 def generate_schedule(start_date, days=365):
     schedule = []
@@ -53,7 +49,7 @@ def generate_schedule(start_date, days=365):
         current_date = start_date + timedelta(days=i)
         hijri_date = Gregorian(current_date.year, current_date.month, current_date.day).to_hijri()
         holiday_name = None
-        # Check if today is holiday
+        # Check holidays
         if hijri_date.month == RAMADAN_MONTH and hijri_date.day in RAMADAN_DAYS:
             holiday_name = "Ramadan"
         elif hijri_date.month == EID_FTR_MONTH and hijri_date.day in EID_FTR_DAYS:
@@ -74,15 +70,15 @@ def generate_schedule(start_date, days=365):
             rotation_index = (rotation_index + 1) % len(ROTATION)
             rotation_type, rotation_length = ROTATION[rotation_index]
             rotation_day_count = 0
+
     return pd.DataFrame(schedule)
 
 def style_schedule(row):
     styles = []
-    # Shift background
     color = COLOR_MAP.get(row["Shift"], "#ffffff")
     for col in row.index:
         styles.append(f"background-color: {color}")
-    # Highlight holidays or Ramadan on Hijri date
+    # Highlight Hijri date for holidays
     if row["Holiday"] == "Ramadan":
         styles[row.index.get_loc("Date (Hijri)")] = "color: red; font-weight: bold"
     elif row["Holiday"] in ["Eid al-Fitr", "Eid al-Adha"]:
