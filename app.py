@@ -27,9 +27,9 @@ EID_ADHA_MONTH, EID_ADHA_DAYS = 12, range(10, 15)  # عيد الأضحى 5 أي�
 
 COLOR_MAP = {
     "Night": "#1f77b4",
-    "Morning": "#f4ca0f",
+    "Morning": "#ffd900",
     "Evening": "#ff7f0e",
-    "OFF": "#d3d3d3"  # لون OFF رمادي
+    "OFF": "#e99999"
 }
 
 HOLIDAY_COLOR = {
@@ -88,31 +88,8 @@ def style_schedule(row):
 # --- STREAMLIT APP ---
 st.title("Yearly Shift Schedule")
 
-# 1️⃣ اختيار المجموعة
 group_selected = st.selectbox("Select Your Group:", list(GROUPS.keys()))
 
-# 2️⃣ إنشاء الجدول
 df = generate_schedule(GROUPS[group_selected])
 
-# 3️⃣ عرض الجدول
 st.dataframe(df.style.apply(style_schedule, axis=1))
-
-# 4️⃣ اختيار أي تاريخ لمعرفة الدوام
-st.markdown("---")
-st.subheader("🔍 Check your shift by date")
-selected_date = st.date_input(
-    "Select a date to know your shift",
-    value=datetime.today().date()
-)
-selected_date = pd.to_datetime(selected_date)
-
-day_info = df[df["Date (Gregorian)"] == selected_date.strftime("%Y-%m-%d")]
-
-if not day_info.empty:
-    shift_name = day_info.iloc[0]["Shift"]
-    hijri_day = day_info.iloc[0]["Date (Hijri)"]
-    st.success(
-        f"📅 {selected_date.strftime('%d-%m-%Y')} (Hijri: {hijri_day}) → 🕒 Shift: **{shift_name}**"
-    )
-else:
-    st.warning("No shift found for this date")
