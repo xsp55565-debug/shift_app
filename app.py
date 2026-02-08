@@ -27,9 +27,9 @@ EID_ADHA_MONTH, EID_ADHA_DAYS = 12, range(10, 15)  # عيد الأضحى 5 أي�
 
 COLOR_MAP = {
     "Night": "#1f77b4",
-    "Morning": "#ffd900",
+    "Morning": "#cbc969",
     "Evening": "#ff7f0e",
-    "OFF": "#e99999"
+    "OFF": "#E3D7D7"
 }
 
 HOLIDAY_COLOR = {
