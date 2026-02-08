@@ -29,6 +29,7 @@ COLOR_MAP = {
     "Night": "#1f77b4",
     "Morning": "#cbc969",
     "Evening": "#ff7f0e",
+
     "OFF": "#E3D7D7"
 }
 
