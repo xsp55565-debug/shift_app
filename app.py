@@ -29,7 +29,6 @@ COLOR_MAP = {
     "Night": "#1f77b4",
     "Morning": "#cbc969",
     "Evening": "#ff7f0e",
-
     "OFF": "#E3D7D7"
 }
 
@@ -92,5 +91,19 @@ st.title("Yearly Shift Schedule")
 group_selected = st.selectbox("Select Your Group:", list(GROUPS.keys()))
 
 df = generate_schedule(GROUPS[group_selected])
+
+# --- Date Picker ---
+selected_date = st.date_input("Select a date to see your shift:")
+
+# Filter for selected date
+shift_info = df[df["Date (Gregorian)"] == selected_date.strftime("%Y-%m-%d")]
+
+if not shift_info.empty:
+    shift_row = shift_info.iloc[0]
+    st.markdown(f"**Shift on {selected_date.strftime('%Y-%m-%d')} ({shift_row['Date (Hijri)']})**: {shift_row['Shift']}")
+    if shift_row["Holiday"]:
+        st.markdown(f"**Holiday**: {shift_row['Holiday']}")
+else:
+    st.markdown("No shift information available for this date.")
 
 st.dataframe(df.style.apply(style_schedule, axis=1))
