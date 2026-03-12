@@ -31,19 +31,19 @@ GROUPS = {
 }
 
 ROTATION = [
-    ("Night", 7),
+    ("N", 7),
     ("OFF", 2),
-    ("Evening", 7),
+    ("E", 7),
     ("OFF", 2),
-    ("Morning", 7),
+    ("M", 7),
     ("OFF", 3),
 ]
 
 COLOR_MAP = {
-    "Night": "#87CEEB",
+    "Night": "#75D0F4",
     "Evening": "#FFA500",
-    "Morning": "#FFF176",
-    "OFF": "#DDDDDD"
+    "Morning": "#F8E859",
+    "OFF": "#B9B7B7"
 }
 
 def generate_schedule(start_date, days=365):
