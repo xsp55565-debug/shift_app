@@ -5,40 +5,73 @@ import calendar
 
 st.set_page_config(page_title="Hadeed Shift", layout="wide")
 
+# ----- STYLE -----
+st.markdown("""
+<style>
+
+body{
+background-color:#f5f7fb;
+}
+
+.logo-card{
+width:500px;
+margin:auto;
+text-align:center;
+padding:35px;
+border-radius:20px;
+background:white;
+box-shadow:0px 8px 25px rgba(0,0,0,0.15);
+border:2px solid #e6e6e6;
+}
+
+.logo-ar{
+font-size:100px;
+color:#1c3d8f;
+font-weight:bold;
+margin-bottom:-30px;
+}
+
+.logo-en{
+font-size:75px;
+color:#f39200;
+font-weight:bold;
+}
+
+table{
+width:100%;
+border-collapse: collapse;
+}
+
+th{
+background:#1c3d8f;
+color:white;
+padding:10px;
+font-size:18px;
+}
+
+td{
+height:90px;
+text-align:center;
+vertical-align:top;
+font-size:15px;
+}
+
+.today{
+border:3px solid red;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 # ----- LOGO -----
 st.markdown("""
-<div style="
-text-align:center;
-border:3px solid #dcdcdc;
-border-radius:15px;
-padding:25px;
-width:450px;
-margin:auto;
-background-color:white;
-box-shadow:0px 4px 12px rgba(0,0,0,0.15);
-">
-
-<div style="
-font-size:90px;
-color:#1546B0;
-font-weight:bold;
-font-family:Arial;
-margin-bottom:-20px;
-">
-حديد
-</div>
-
-<div style="
-font-size:70px;
-color:#F39200;
-font-weight:bold;
-font-family:Arial;
-">
-hadeed
-</div>
-
+<div class="logo-card">
+<div class="logo-ar">حديد</div>
+<div class="logo-en">hadeed</div>
 </div>
 """, unsafe_allow_html=True)
+
+st.write("")
 
 # ----- GROUPS -----
 GROUPS = {
@@ -58,14 +91,13 @@ ROTATION = [
 COLOR_MAP = {
     "Night": "#87CEEB",
     "Evening": "#FFA500",
-    "Morning": "#FFFF66",
+    "Morning": "#FFF176",
     "OFF": "#DDDDDD"
 }
 
 def generate_schedule(start_date, days=365):
 
     schedule = []
-
     rotation_index = 0
     rotation_day_count = 0
     rotation_type, rotation_length = ROTATION[rotation_index]
@@ -100,7 +132,7 @@ today_row = df[df["Date"].dt.date == today.date()]
 
 if not today_row.empty:
     today_shift = today_row.iloc[0]["Shift"]
-    st.success(f"Today's Shift: {today_shift}")
+    st.success(f"⭐ Today's Shift: {today_shift}")
 
 col1, col2 = st.columns(2)
 
@@ -112,29 +144,7 @@ with col2:
 
 cal = calendar.monthcalendar(year, month)
 
-html = """
-<style>
-table {
-    width:100%;
-    border-collapse: collapse;
-}
-th {
-    background:#1c3d8f;
-    color:white;
-    padding:10px;
-}
-td {
-    height:80px;
-    text-align:center;
-    vertical-align:top;
-}
-.today {
-    border:3px solid red;
-}
-</style>
-"""
-
-html += "<table border=1>"
+html = "<table border=1>"
 html += "<tr><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr>"
 
 for week in cal:
