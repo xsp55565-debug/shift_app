@@ -3,21 +3,42 @@ import pandas as pd
 from datetime import datetime, timedelta
 import calendar
 
-
+st.set_page_config(page_title="Hadeed Shift", layout="wide")
 
 # ----- LOGO -----
 st.markdown("""
-<div style="text-align:center; margin-top:20px;">
-    <div style="font-size:70px; color:#1546B0; font-weight:bold; font-family:Arial;">
-        حديد
-    </div>
-    <div style="font-size:55px; color:#F39200; font-weight:bold; font-family:Arial;">
-        hadeed
-    </div>
+<div style="
+text-align:center;
+border:3px solid #dcdcdc;
+border-radius:15px;
+padding:25px;
+width:450px;
+margin:auto;
+background-color:white;
+box-shadow:0px 4px 12px rgba(0,0,0,0.15);
+">
+
+<div style="
+font-size:90px;
+color:#1546B0;
+font-weight:bold;
+font-family:Arial;
+margin-bottom:-20px;
+">
+حديد
+</div>
+
+<div style="
+font-size:70px;
+color:#F39200;
+font-weight:bold;
+font-family:Arial;
+">
+hadeed
+</div>
+
 </div>
 """, unsafe_allow_html=True)
-
-st.markdown("<h2 style='text-align:center;'>تقويم ورديات حديد</h2>", unsafe_allow_html=True)
 
 # ----- GROUPS -----
 GROUPS = {
