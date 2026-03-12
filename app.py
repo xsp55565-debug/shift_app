@@ -3,8 +3,14 @@ import pandas as pd
 from datetime import datetime, timedelta
 import calendar
 
-st.set_page_config(page_title="Shift Calendar", layout="wide")
+st.set_page_config(page_title="Hadeed Shift Calendar", layout="wide")
 
+# ---- LOGO ----
+st.image("https://i.imgur.com/3QKQK9G.png", width=250)
+
+st.title("Hadeed Shift Calendar")
+
+# ---- GROUPS ----
 GROUPS = {
     "B": datetime(2026, 1, 18),
     "C": datetime(2026, 1, 25),
@@ -26,11 +32,9 @@ COLOR_MAP = {
     "OFF": "#DDDDDD"
 }
 
-
 def generate_schedule(start_date, days=365):
 
     schedule = []
-
     rotation_index = 0
     rotation_day_count = 0
     rotation_type, rotation_length = ROTATION[rotation_index]
@@ -54,9 +58,7 @@ def generate_schedule(start_date, days=365):
 
     return pd.DataFrame(schedule)
 
-
-st.title("📅 Shift Calendar")
-
+# ---- APP ----
 group_selected = st.selectbox("Select Group", list(GROUPS.keys()))
 
 df = generate_schedule(GROUPS[group_selected])
@@ -67,7 +69,7 @@ today_row = df[df["Date"].dt.date == today.date()]
 
 if not today_row.empty:
     today_shift = today_row.iloc[0]["Shift"]
-    st.success(f"⭐ Today's Shift: {today_shift}")
+    st.success(f"Today's Shift: {today_shift}")
 
 col1, col2 = st.columns(2)
 
@@ -75,7 +77,7 @@ with col1:
     month = st.selectbox("Month", range(1, 13), index=today.month - 1)
 
 with col2:
-    year = st.selectbox("Year", [2026, 2027, 2028], index=0)
+    year = st.selectbox("Year", [2026, 2027, 2028])
 
 cal = calendar.monthcalendar(year, month)
 
@@ -86,7 +88,7 @@ table {
     border-collapse: collapse;
 }
 th {
-    background:#222;
+    background:#1c3d8f;
     color:white;
     padding:10px;
 }
@@ -94,7 +96,6 @@ td {
     height:80px;
     text-align:center;
     vertical-align:top;
-    font-size:14px;
 }
 .today {
     border:3px solid red;
