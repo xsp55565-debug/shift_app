@@ -31,11 +31,11 @@ GROUPS = {
 }
 
 ROTATION = [
-    ("N", 7),
+    ("Night", 7),
     ("OFF", 2),
-    ("E", 7),
+    ("Evening", 7),
     ("OFF", 2),
-    ("M", 7),
+    ("Morning", 7),
     ("OFF", 3),
 ]
 
