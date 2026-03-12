@@ -1,8 +1,10 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
+import calendar
 
-# CONFIG
+st.set_page_config(page_title="Shift Calendar", layout="wide")
+
 GROUPS = {
     "B": datetime(2026, 1, 18),
     "C": datetime(2026, 1, 25),
@@ -18,15 +20,17 @@ ROTATION = [
 ]
 
 COLOR_MAP = {
-    "Night": "#87CEEB",      # سماوي
-    "Evening": "#FFA500",    # برتقالي
-    "Morning": "#FFFF66",    # أصفر
-    "OFF": "#D3D3D3"         # رمادي
+    "Night": "#87CEEB",
+    "Evening": "#FFA500",
+    "Morning": "#FFFF66",
+    "OFF": "#DDDDDD"
 }
+
 
 def generate_schedule(start_date, days=365):
 
     schedule = []
+
     rotation_index = 0
     rotation_day_count = 0
     rotation_type, rotation_length = ROTATION[rotation_index]
@@ -36,13 +40,14 @@ def generate_schedule(start_date, days=365):
         current_date = start_date + timedelta(days=i)
 
         schedule.append({
-            "Date": current_date.strftime("%Y-%m-%d"),
+            "Date": current_date,
             "Shift": rotation_type
         })
 
         rotation_day_count += 1
 
         if rotation_day_count >= rotation_length:
+
             rotation_index = (rotation_index + 1) % len(ROTATION)
             rotation_type, rotation_length = ROTATION[rotation_index]
             rotation_day_count = 0
@@ -50,22 +55,88 @@ def generate_schedule(start_date, days=365):
     return pd.DataFrame(schedule)
 
 
-def color_shift(row):
-    color = COLOR_MAP.get(row["Shift"], "white")
-    return [f"background-color: {color}"] * len(row)
-
-
-st.title("Shift Schedule")
+st.title("📅 Shift Calendar")
 
 group_selected = st.selectbox("Select Group", list(GROUPS.keys()))
 
 df = generate_schedule(GROUPS[group_selected])
 
-selected_date = st.date_input("Choose Date")
+today = datetime.today()
 
-result = df[df["Date"] == selected_date.strftime("%Y-%m-%d")]
+today_row = df[df["Date"].dt.date == today.date()]
 
-if not result.empty:
-    st.success(f"Your shift: {result.iloc[0]['Shift']}")
+if not today_row.empty:
+    today_shift = today_row.iloc[0]["Shift"]
+    st.success(f"⭐ Today's Shift: {today_shift}")
 
-st.dataframe(df.style.apply(color_shift, axis=1))
+col1, col2 = st.columns(2)
+
+with col1:
+    month = st.selectbox("Month", range(1, 13), index=today.month - 1)
+
+with col2:
+    year = st.selectbox("Year", [2026, 2027, 2028], index=0)
+
+cal = calendar.monthcalendar(year, month)
+
+html = """
+<style>
+table {
+    width:100%;
+    border-collapse: collapse;
+}
+th {
+    background:#222;
+    color:white;
+    padding:10px;
+}
+td {
+    height:80px;
+    text-align:center;
+    vertical-align:top;
+    font-size:14px;
+}
+.today {
+    border:3px solid red;
+}
+</style>
+"""
+
+html += "<table border=1>"
+html += "<tr><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr>"
+
+for week in cal:
+
+    html += "<tr>"
+
+    for day in week:
+
+        if day == 0:
+            html += "<td></td>"
+
+        else:
+
+            date = datetime(year, month, day)
+
+            row = df[df["Date"] == date]
+
+            if not row.empty:
+
+                shift = row.iloc[0]["Shift"]
+                color = COLOR_MAP[shift]
+
+                today_class = ""
+
+                if date.date() == today.date():
+                    today_class = "today"
+
+                html += f"<td class='{today_class}' style='background:{color}'><b>{day}</b><br>{shift}</td>"
+
+            else:
+                html += f"<td>{day}</td>"
+
+    html += "</tr>"
+
+html += "</table>"
+
+st.markdown(html, unsafe_allow_html=True)
