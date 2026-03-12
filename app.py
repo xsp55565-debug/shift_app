@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import calendar
 
-st.set_page_config(page_title="Hadeed Shift Calendar", layout="wide")
+
 
 # ----- LOGO -----
 st.markdown("""
