@@ -38,10 +38,10 @@ ROTATION = [
 ]
 
 COLOR_MAP = {
-    "Night": "#87CEEB",
+    "Night": "#77CBED",
     "Evening": "#FFA500",
-    "Morning": "#FFF176",
-    "OFF": "#DDDDDD"
+    "Morning": "#FEF06B",
+    "OFF": "#C7C2C2DB"
 }
 
 def generate_schedule(start_date, days=365):
