@@ -5,12 +5,21 @@ import calendar
 
 st.set_page_config(page_title="Hadeed Shift Calendar", layout="wide")
 
-# ---- LOGO ----
-st.image("https://i.imgur.com/3QKQK9G.png", width=250)
+# ----- LOGO -----
+st.markdown("""
+<div style="text-align:center; margin-top:20px;">
+    <div style="font-size:70px; color:#1546B0; font-weight:bold; font-family:Arial;">
+        حديد
+    </div>
+    <div style="font-size:55px; color:#F39200; font-weight:bold; font-family:Arial;">
+        hadeed
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-st.title("Hadeed Shift Calendar")
+st.markdown("<h2 style='text-align:center;'>تقويم ورديات حديد</h2>", unsafe_allow_html=True)
 
-# ---- GROUPS ----
+# ----- GROUPS -----
 GROUPS = {
     "B": datetime(2026, 1, 18),
     "C": datetime(2026, 1, 25),
@@ -35,6 +44,7 @@ COLOR_MAP = {
 def generate_schedule(start_date, days=365):
 
     schedule = []
+
     rotation_index = 0
     rotation_day_count = 0
     rotation_type, rotation_length = ROTATION[rotation_index]
@@ -58,7 +68,7 @@ def generate_schedule(start_date, days=365):
 
     return pd.DataFrame(schedule)
 
-# ---- APP ----
+# ----- APP -----
 group_selected = st.selectbox("Select Group", list(GROUPS.keys()))
 
 df = generate_schedule(GROUPS[group_selected])
