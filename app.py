@@ -17,6 +17,13 @@ ROTATION = [
     ("OFF", 3),
 ]
 
+COLOR_MAP = {
+    "Night": "#87CEEB",      # سماوي
+    "Evening": "#FFA500",    # برتقالي
+    "Morning": "#FFFF66",    # أصفر
+    "OFF": "#D3D3D3"         # رمادي
+}
+
 def generate_schedule(start_date, days=365):
 
     schedule = []
@@ -43,6 +50,11 @@ def generate_schedule(start_date, days=365):
     return pd.DataFrame(schedule)
 
 
+def color_shift(row):
+    color = COLOR_MAP.get(row["Shift"], "white")
+    return [f"background-color: {color}"] * len(row)
+
+
 st.title("Shift Schedule")
 
 group_selected = st.selectbox("Select Group", list(GROUPS.keys()))
@@ -56,4 +68,4 @@ result = df[df["Date"] == selected_date.strftime("%Y-%m-%d")]
 if not result.empty:
     st.success(f"Your shift: {result.iloc[0]['Shift']}")
 
-st.dataframe(df)
+st.dataframe(df.style.apply(color_shift, axis=1))
