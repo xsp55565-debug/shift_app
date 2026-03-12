@@ -64,24 +64,31 @@ def generate_schedule(start_date, days=365):
             current_date.day
         ).to_hijri()
 
-        title = rotation_type
+        hijri_text = f"{hijri.day}/{hijri.month}"
+
+        title = f"{rotation_type} | {hijri_text}"
+
+        color = COLOR_MAP[rotation_type]
 
         # رمضان
         if hijri.month == 9:
-            title += " 🌙 Ramadan"
+            title += " 🌙"
+            color = "#9c27b0"
 
         # عيد الفطر
         if hijri.month == 10 and hijri.day <= 3:
-            title += " 🎉 Eid Al-Fitr"
+            title += " 🎉"
+            color = "#4caf50"
 
         # عيد الأضحى
         if hijri.month == 12 and 10 <= hijri.day <= 13:
-            title += " 🐑 Eid Al-Adha"
+            title += " 🐑"
+            color = "#2196f3"
 
         events.append({
             "title": title,
             "start": current_date.strftime("%Y-%m-%d"),
-            "color": COLOR_MAP[rotation_type]
+            "color": color
         })
 
         rotation_day_count += 1
