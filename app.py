@@ -68,7 +68,7 @@ SHIFT_SHORT = {
     "OFF":"OFF"
 }
 
-# ---------- SHIFT FUNCTION ----------
+# ---------- GET SHIFT ----------
 def get_shift_for_date(start_date, target_date):
 
     if isinstance(target_date, datetime):
@@ -92,7 +92,7 @@ def get_shift_for_date(start_date, target_date):
             rotation_type,rotation_length=ROTATION[rotation_index]
             rotation_day=0
 
-# ---------- CALENDAR EVENTS ----------
+# ---------- GENERATE CALENDAR ----------
 def generate_schedule(start_date, days=365):
 
     events=[]
@@ -113,21 +113,20 @@ def generate_schedule(start_date, days=365):
 
         hijri_text=f"{hijri.day}/{hijri.month}"
 
-        # هنا نخلي الهجري تحت الشفت
-        title=f"<b>{SHIFT_SHORT[rotation_type]}</b><br>{hijri_text}"
+        title=f"{SHIFT_SHORT[rotation_type]}\n{hijri_text}"
 
         color=COLOR_MAP[rotation_type]
 
         if hijri.month==9:
-            title=f"<b>{SHIFT_SHORT[rotation_type]}</b><br>🌙 {hijri_text}"
+            title=f"{SHIFT_SHORT[rotation_type]}\n🌙 {hijri_text}"
             color="#9c27b0"
 
         if hijri.month==10 and hijri.day<=3:
-            title=f"<b>🎉 {SHIFT_SHORT[rotation_type]}</b><br>{hijri_text}"
+            title=f"🎉 {SHIFT_SHORT[rotation_type]}\n{hijri_text}"
             color="#4caf50"
 
         if hijri.month==12 and 10<=hijri.day<=13:
-            title=f"<b>🐑 {SHIFT_SHORT[rotation_type]}</b><br>{hijri_text}"
+            title=f"🐑 {SHIFT_SHORT[rotation_type]}\n{hijri_text}"
             color="#2196f3"
 
         events.append({
@@ -147,8 +146,9 @@ def generate_schedule(start_date, days=365):
 
 events=generate_schedule(GROUPS[group_selected])
 
-# ---------- TODAY ----------
+# ---------- TODAY SHIFT ----------
 today=datetime.today()
+
 today_shift=get_shift_for_date(GROUPS[group_selected], today)
 
 st.markdown(f"""
@@ -172,7 +172,7 @@ st.success(f"Shift: {shift_selected}")
 # ---------- CALENDAR ----------
 calendar_options = {
 "initialView":"dayGridMonth",
-"height":650
+"height":650,
 }
 
 calendar(events=events, options=calendar_options)
