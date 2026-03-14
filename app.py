@@ -7,33 +7,29 @@ st.set_page_config(page_title="Hadeed Shift", layout="wide")
 
 # ---------- LOGO ----------
 st.markdown("""
-<div style="text-align:center;padding:20px;border-radius:20px;background:white;
-width:240px;margin:auto;box-shadow:0px 6px 20px rgba(0,0,0,0.15);">
+<div style="text-align:center;padding:18px;border-radius:18px;background:white;
+width:240px;margin:auto;box-shadow:0px 5px 15px rgba(0,0,0,0.15);">
 <div style="font-size:50px;color:#1c3d8f;font-weight:bold;">حديد</div>
-<div style="font-size:28px;color:#f39200;font-weight:bold;">hadeed</div>
+<div style="font-size:26px;color:#f39200;font-weight:bold;">hadeed</div>
 </div>
 """, unsafe_allow_html=True)
 
-st.write("")
-
-# ---------- COLOR LEGEND ----------
+# ---------- LEGEND ----------
 st.markdown("""
-<div style="margin:auto;margin-top:10px;padding:12px;border-radius:12px;
-background:white;width:520px;box-shadow:0px 3px 12px rgba(0,0,0,0.1);
-font-size:14px;text-align:center;">
+<div style="text-align:center;padding:12px;border-radius:12px;background:white;
+width:240px;margin:auto;margin-top:10px;box-shadow:0px 3px 10px rgba(0,0,0,0.1);
+font-size:12px;">
 
-<b>توضيح الألوان</b><br><br>
+<b>Legend</b><br><br>
 
-<span style="background:#FFF176;padding:6px 10px;border-radius:8px;">Morning</span>
-<span style="background:#FFA500;padding:6px 10px;border-radius:8px;">Evening</span>
-<span style="background:#87CEEB;padding:6px 10px;border-radius:8px;">Night</span>
-<span style="background:#E0E0E0;padding:6px 10px;border-radius:8px;">OFF</span>
+<span style="background:#FFF176;padding:4px 8px;border-radius:6px;">Morning</span><br><br>
+<span style="background:#FFA500;padding:4px 8px;border-radius:6px;">Evening</span><br><br>
+<span style="background:#87CEEB;padding:4px 8px;border-radius:6px;">Night</span><br><br>
+<span style="background:#E0E0E0;padding:4px 8px;border-radius:6px;">OFF</span><br><br>
 
-<br><br>
-
-<span style="background:#9c27b0;color:white;padding:6px 10px;border-radius:8px;">🌙 Ramadan</span>
-<span style="background:#4caf50;color:white;padding:6px 10px;border-radius:8px;">🎉 Eid Al-Fitr</span>
-<span style="background:#2196f3;color:white;padding:6px 10px;border-radius:8px;">🐑 Eid Al-Adha</span>
+<span style="background:#9c27b0;color:white;padding:4px 8px;border-radius:6px;">Ramadan</span><br><br>
+<span style="background:#4caf50;color:white;padding:4px 8px;border-radius:6px;">Eid Fitr</span><br><br>
+<span style="background:#2196f3;color:white;padding:4px 8px;border-radius:6px;">Eid Adha</span>
 
 </div>
 """, unsafe_allow_html=True)
@@ -46,8 +42,7 @@ GROUPS = {
     "C": datetime(2026,1,25),
 }
 
-st.markdown("### اختر مجموعتك")
-group_selected = st.selectbox("", list(GROUPS.keys()))
+group_selected = st.selectbox("Select Group", list(GROUPS.keys()))
 
 # ---------- ROTATION ----------
 ROTATION = [
@@ -73,8 +68,11 @@ SHIFT_SHORT = {
     "OFF":"OFF"
 }
 
-# ---------- FUNCTION ----------
+# ---------- GET SHIFT ----------
 def get_shift_for_date(start_date, target_date):
+
+    if isinstance(target_date, datetime):
+        target_date = target_date.date()
 
     rotation_index=0
     rotation_day=0
@@ -84,7 +82,7 @@ def get_shift_for_date(start_date, target_date):
 
         date=start_date+timedelta(days=i)
 
-        if date.date()==target_date.date():
+        if date.date()==target_date:
             return rotation_type
 
         rotation_day+=1
@@ -94,7 +92,7 @@ def get_shift_for_date(start_date, target_date):
             rotation_type,rotation_length=ROTATION[rotation_index]
             rotation_day=0
 
-# ---------- GENERATE EVENTS ----------
+# ---------- GENERATE CALENDAR ----------
 def generate_schedule(start_date, days=365):
 
     events=[]
@@ -148,27 +146,28 @@ def generate_schedule(start_date, days=365):
 
 events=generate_schedule(GROUPS[group_selected])
 
-# ---------- TODAY ----------
+# ---------- TODAY SHIFT ----------
 today=datetime.today()
+
 today_shift=get_shift_for_date(GROUPS[group_selected], today)
 
 st.markdown(f"""
-<div style="background:#0f5132;color:white;padding:14px;border-radius:10px;
-font-size:20px;font-weight:bold;text-align:center;">
-⭐ دوام اليوم: {today_shift}
+<div style="background:#0f5132;color:white;padding:12px;border-radius:10px;
+font-size:18px;font-weight:bold;text-align:center;">
+Today Shift: {today_shift}
 </div>
 """, unsafe_allow_html=True)
 
 st.write("")
 
 # ---------- DATE PICKER ----------
-st.markdown("### اعرف دوامك لأي تاريخ")
+st.markdown("### Check Shift For Date")
 
-selected_date=st.date_input("اختر التاريخ")
+selected_date=st.date_input("Select Date")
 
 shift_selected=get_shift_for_date(GROUPS[group_selected], selected_date)
 
-st.success(f"دوامك في هذا اليوم: {shift_selected}")
+st.success(f"Shift: {shift_selected}")
 
 # ---------- CALENDAR ----------
 calendar_options = {
