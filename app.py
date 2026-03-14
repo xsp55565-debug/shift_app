@@ -46,18 +46,18 @@ group_selected = st.selectbox("Select Group", list(GROUPS.keys()))
 
 # ---------- ROTATION ----------
 ROTATION = [
-    ("Night",7),
+    ("N",7),
     ("OFF",2),
-    ("Evening",7),
+    ("E",7),
     ("OFF",2),
-    ("Morning",7),
+    ("M",7),
     ("OFF",3),
 ]
 
 COLOR_MAP = {
-    "Night":"#87CEEB",
-    "Evening":"#FFA500",
-    "Morning":"#FFF176",
+    "N":"#87CEEB",
+    "E":"#FFA500",
+    "M":"#FFF176",
     "OFF":"#E0E0E0"
 }
 
@@ -116,12 +116,12 @@ def generate_schedule(start_date, days=365):
 
         # Eid Al-Fitr
         if hijri.month==10 and hijri.day<=3:
-            title=f"🎉 {rotation_type}{hijri_text}"
+            title=f"{rotation_type}{hijri_text}"
             color="#4caf50"
 
         # Eid Al-Adha
         if hijri.month==12 and 10<=hijri.day<=13:
-            title=f"🐑 {rotation_type}{hijri_text}"
+            title=f"{rotation_type}{hijri_text}"
             color="#2196f3"
 
         events.append({
