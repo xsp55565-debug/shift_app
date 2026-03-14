@@ -31,18 +31,18 @@ GROUPS = {
 }
 
 ROTATION = [
-    ("Night", 7),
+    ("N", 7),
     ("OFF", 2),
-    ("Evening", 7),
+    ("E", 7),
     ("OFF", 2),
-    ("Morning", 7),
+    ("M", 7),
     ("OFF", 3),
 ]
 
 COLOR_MAP = {
-    "Night": "#75D0F4",
-    "Evening": "#FFA500",
-    "Morning": "#F8E859",
+    "N": "#75D0F4",
+    "E": "#FFA500",
+    "M": "#F8E859",
     "OFF": "#B9B7B7"
 }
 
