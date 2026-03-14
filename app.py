@@ -1,6 +1,6 @@
 import streamlit as st
 from datetime import datetime, timedelta
-from streamlit_calendar import calendar
+import pandas as pd
 from hijri_converter import Gregorian
 
 st.set_page_config(page_title="Hadeed Shift", layout="wide")
@@ -11,26 +11,6 @@ st.markdown("""
 width:240px;margin:auto;box-shadow:0px 5px 15px rgba(0,0,0,0.15);">
 <div style="font-size:50px;color:#1c3d8f;font-weight:bold;">حديد</div>
 <div style="font-size:26px;color:#f39200;font-weight:bold;">hadeed</div>
-</div>
-""", unsafe_allow_html=True)
-
-# ---------- LEGEND ----------
-st.markdown("""
-<div style="text-align:center;padding:12px;border-radius:12px;background:white;
-width:240px;margin:auto;margin-top:10px;box-shadow:0px 3px 10px rgba(0,0,0,0.1);
-font-size:12px;">
-
-<b>Legend</b><br><br>
-
-<span style="background:#FFF176;padding:4px 8px;border-radius:6px;">Morning</span><br><br>
-<span style="background:#FFA500;padding:4px 8px;border-radius:6px;">Evening</span><br><br>
-<span style="background:#87CEEB;padding:4px 8px;border-radius:6px;">Night</span><br><br>
-<span style="background:#E0E0E0;padding:4px 8px;border-radius:6px;">OFF</span><br><br>
-
-<span style="background:#9c27b0;color:white;padding:4px 8px;border-radius:6px;">Ramadan</span><br><br>
-<span style="background:#4caf50;color:white;padding:4px 8px;border-radius:6px;">Eid Fitr</span><br><br>
-<span style="background:#2196f3;color:white;padding:4px 8px;border-radius:6px;">Eid Adha</span>
-
 </div>
 """, unsafe_allow_html=True)
 
@@ -68,34 +48,10 @@ SHIFT_SHORT = {
     "OFF":"OFF"
 }
 
-# ---------- GET SHIFT ----------
-def get_shift_for_date(start_date, target_date):
-
-    if isinstance(target_date, datetime):
-        target_date = target_date.date()
-
-    rotation_index=0
-    rotation_day=0
-    rotation_type,rotation_length=ROTATION[rotation_index]
-
-    for i in range(2000):
-
-        date=start_date+timedelta(days=i)
-
-        if date.date()==target_date:
-            return rotation_type
-
-        rotation_day+=1
-
-        if rotation_day>=rotation_length:
-            rotation_index=(rotation_index+1)%len(ROTATION)
-            rotation_type,rotation_length=ROTATION[rotation_index]
-            rotation_day=0
-
-# ---------- GENERATE CALENDAR ----------
+# ---------- GENERATE SCHEDULE ----------
 def generate_schedule(start_date, days=365):
 
-    events=[]
+    schedule=[]
 
     rotation_index=0
     rotation_day=0
@@ -103,36 +59,18 @@ def generate_schedule(start_date, days=365):
 
     for i in range(days):
 
-        current_date=start_date+timedelta(days=i)
+        date=start_date+timedelta(days=i)
 
-        hijri=Gregorian(
-            current_date.year,
-            current_date.month,
-            current_date.day
-        ).to_hijri()
+        hijri=Gregorian(date.year,date.month,date.day).to_hijri()
 
         hijri_text=f"{hijri.day}/{hijri.month}"
 
-        title=f"{SHIFT_SHORT[rotation_type]}\n{hijri_text}"
-
-        color=COLOR_MAP[rotation_type]
-
-        if hijri.month==9:
-            title=f"{SHIFT_SHORT[rotation_type]}\n🌙 {hijri_text}"
-            color="#9c27b0"
-
-        if hijri.month==10 and hijri.day<=3:
-            title=f"🎉 {SHIFT_SHORT[rotation_type]}\n{hijri_text}"
-            color="#4caf50"
-
-        if hijri.month==12 and 10<=hijri.day<=13:
-            title=f"🐑 {SHIFT_SHORT[rotation_type]}\n{hijri_text}"
-            color="#2196f3"
-
-        events.append({
-            "title":title,
-            "start":current_date.strftime("%Y-%m-%d"),
-            "color":color
+        schedule.append({
+            "date":date,
+            "shift":rotation_type,
+            "shift_short":SHIFT_SHORT[rotation_type],
+            "color":COLOR_MAP[rotation_type],
+            "hijri":hijri_text
         })
 
         rotation_day+=1
@@ -142,37 +80,49 @@ def generate_schedule(start_date, days=365):
             rotation_type,rotation_length=ROTATION[rotation_index]
             rotation_day=0
 
-    return events
+    return schedule
 
-events=generate_schedule(GROUPS[group_selected])
+schedule=generate_schedule(GROUPS[group_selected])
 
 # ---------- TODAY SHIFT ----------
-today=datetime.today()
+today=datetime.today().date()
 
-today_shift=get_shift_for_date(GROUPS[group_selected], today)
+today_shift=[d["shift"] for d in schedule if d["date"].date()==today]
 
-st.markdown(f"""
+if today_shift:
+    st.markdown(f"""
 <div style="background:#0f5132;color:white;padding:12px;border-radius:10px;
 font-size:18px;font-weight:bold;text-align:center;">
-Today Shift: {today_shift}
+Today Shift: {today_shift[0]}
 </div>
 """, unsafe_allow_html=True)
 
 st.write("")
 
-# ---------- DATE PICKER ----------
-st.markdown("### Check Shift For Date")
+# ---------- CALENDAR GRID ----------
+st.markdown("### Shift Calendar")
 
-selected_date=st.date_input("Select Date")
+cols = st.columns(7)
 
-shift_selected=get_shift_for_date(GROUPS[group_selected], selected_date)
+for i,day in enumerate(schedule[:35]):
 
-st.success(f"Shift: {shift_selected}")
+    col=cols[i%7]
 
-# ---------- CALENDAR ----------
-calendar_options = {
-"initialView":"dayGridMonth",
-"height":650,
-}
+    with col:
 
-calendar(events=events, options=calendar_options)
+        st.markdown(f"""
+        <div style="
+        background:{day['color']};
+        padding:12px;
+        border-radius:10px;
+        text-align:center;
+        margin-bottom:10px;
+        color:black;
+        font-weight:bold;">
+        
+        {day['date'].day}<br>
+        {day['shift_short']}<br>
+        {day['hijri']}
+        
+        </div>
+        """, unsafe_allow_html=True)
