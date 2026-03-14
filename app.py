@@ -51,7 +51,7 @@ GROUPS = {
     "C": datetime(2026,1,25),
 }
 
-st.markdown("### اختر مجموعتك")
+st.markdown("### اChoose your group")
 group_selected = st.selectbox("", list(GROUPS.keys()))
 
 # ---------- ROTATION ----------
