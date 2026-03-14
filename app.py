@@ -14,9 +14,29 @@ width:220px;margin:auto;box-shadow:0px 4px 12px rgba(0,0,0,0.15);">
 </div>
 """, unsafe_allow_html=True)
 
+# ---------- LEGEND ----------
+st.markdown("""
+<div style="text-align:center;padding:10px;border-radius:12px;background:white;
+width:220px;margin:auto;margin-top:10px;
+box-shadow:0px 3px 10px rgba(0,0,0,0.1);font-size:12px;">
+
+<b>Legend</b><br><br>
+
+<span style="background:#FFF176;padding:4px 8px;border-radius:6px;">Morning</span><br><br>
+<span style="background:#FFA500;padding:4px 8px;border-radius:6px;">Evening</span><br><br>
+<span style="background:#87CEEB;padding:4px 8px;border-radius:6px;">Night</span><br><br>
+<span style="background:#E0E0E0;padding:4px 8px;border-radius:6px;">OFF</span><br><br>
+
+<span style="background:#9c27b0;color:white;padding:4px 8px;border-radius:6px;">Ramadan</span><br><br>
+<span style="background:#4caf50;color:white;padding:4px 8px;border-radius:6px;">Eid Al-Fitr</span><br><br>
+<span style="background:#2196f3;color:white;padding:4px 8px;border-radius:6px;">Eid Al-Adha</span>
+
+</div>
+""", unsafe_allow_html=True)
+
 st.write("")
 
-# ---------- GROUP ----------
+# ---------- GROUPS ----------
 GROUPS = {
     "B": datetime(2026,1,18),
     "C": datetime(2026,1,25),
@@ -44,6 +64,9 @@ COLOR_MAP = {
 # ---------- SHIFT FUNCTION ----------
 def get_shift_for_date(start_date, target_date):
 
+    if isinstance(target_date, datetime):
+        target_date = target_date.date()
+
     rotation_index=0
     rotation_day=0
     rotation_type,rotation_length=ROTATION[rotation_index]
@@ -52,7 +75,7 @@ def get_shift_for_date(start_date, target_date):
 
         date=start_date+timedelta(days=i)
 
-        if date.date()==target_date.date():
+        if date.date()==target_date:
             return rotation_type
 
         rotation_day+=1
@@ -84,11 +107,27 @@ def generate_schedule(start_date, days=365):
         hijri_text=f"{hijri.day}/{hijri.month}"
 
         title=f"{rotation_type} | {hijri_text}"
+        color=COLOR_MAP[rotation_type]
+
+        # Ramadan
+        if hijri.month==9:
+            title=f"{rotation_type} | 🌙 {hijri_text}"
+            color="#9c27b0"
+
+        # Eid Al-Fitr
+        if hijri.month==10 and hijri.day<=3:
+            title=f"🎉 {rotation_type} | {hijri_text}"
+            color="#4caf50"
+
+        # Eid Al-Adha
+        if hijri.month==12 and 10<=hijri.day<=13:
+            title=f"🐑 {rotation_type} | {hijri_text}"
+            color="#2196f3"
 
         events.append({
             "title":title,
             "start":current_date.strftime("%Y-%m-%d"),
-            "color":COLOR_MAP[rotation_type]
+            "color":color
         })
 
         rotation_day+=1
@@ -104,6 +143,7 @@ events=generate_schedule(GROUPS[group_selected])
 
 # ---------- TODAY SHIFT ----------
 today=datetime.today()
+
 today_shift=get_shift_for_date(GROUPS[group_selected], today)
 
 st.markdown(f"""
@@ -120,7 +160,7 @@ st.markdown("### Check Shift")
 
 selected_date=st.date_input("Select Date")
 
-shift_selected=get_shift_for_date(GROUPS[group_selected], datetime.combine(selected_date, datetime.min.time()))
+shift_selected=get_shift_for_date(GROUPS[group_selected], selected_date)
 
 st.success(f"Shift: {shift_selected}")
 
