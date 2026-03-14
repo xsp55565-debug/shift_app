@@ -106,22 +106,22 @@ def generate_schedule(start_date, days=365):
 
         hijri_text=f"{hijri.day}/{hijri.month}"
 
-        title=f"{rotation_type} | {hijri_text}"
+        title=f"{rotation_type}{hijri_text}"
         color=COLOR_MAP[rotation_type]
 
         # Ramadan
         if hijri.month==9:
-            title=f"{rotation_type} | 🌙 {hijri_text}"
+            title=f"{rotation_type}{hijri_text}"
             color="#9c27b0"
 
         # Eid Al-Fitr
         if hijri.month==10 and hijri.day<=3:
-            title=f"🎉 {rotation_type} | {hijri_text}"
+            title=f"🎉 {rotation_type}{hijri_text}"
             color="#4caf50"
 
         # Eid Al-Adha
         if hijri.month==12 and 10<=hijri.day<=13:
-            title=f"🐑 {rotation_type} | {hijri_text}"
+            title=f"🐑 {rotation_type}{hijri_text}"
             color="#2196f3"
 
         events.append({
