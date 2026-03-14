@@ -3,7 +3,11 @@ from datetime import datetime, timedelta
 from streamlit_calendar import calendar
 from hijri_converter import Gregorian
 
-st.set_page_config(page_title="Hadeed Shift", layout="wide")
+st.set_page_config(
+    page_title="Hadeed Shift",
+    page_icon="📅",
+    layout="wide"
+)
 
 # ---------- LOGO ----------
 st.markdown("""
@@ -46,18 +50,18 @@ group_selected = st.selectbox("Select Group", list(GROUPS.keys()))
 
 # ---------- ROTATION ----------
 ROTATION = [
-    ("N",7),
+    ("Night",7),
     ("OFF",2),
-    ("E",7),
+    ("Evening",7),
     ("OFF",2),
-    ("M",7),
+    ("Morning",7),
     ("OFF",3),
 ]
 
 COLOR_MAP = {
-    "N":"#87CEEB",
-    "E":"#FFA500",
-    "M":"#FFF176",
+    "Night":"#87CEEB",
+    "Evening":"#FFA500",
+    "Morning":"#FFF176",
     "OFF":"#E0E0E0"
 }
 
@@ -67,87 +71,86 @@ def get_shift_for_date(start_date, target_date):
     if isinstance(target_date, datetime):
         target_date = target_date.date()
 
-    rotation_index=0
-    rotation_day=0
-    rotation_type,rotation_length=ROTATION[rotation_index]
+    rotation_index = 0
+    rotation_day = 0
+    rotation_type, rotation_length = ROTATION[rotation_index]
 
     for i in range(2000):
 
-        date=start_date+timedelta(days=i)
+        date = start_date + timedelta(days=i)
 
-        if date.date()==target_date:
+        if date.date() == target_date:
             return rotation_type
 
-        rotation_day+=1
+        rotation_day += 1
 
-        if rotation_day>=rotation_length:
-            rotation_index=(rotation_index+1)%len(ROTATION)
-            rotation_type,rotation_length=ROTATION[rotation_index]
-            rotation_day=0
+        if rotation_day >= rotation_length:
+            rotation_index = (rotation_index + 1) % len(ROTATION)
+            rotation_type, rotation_length = ROTATION[rotation_index]
+            rotation_day = 0
 
 # ---------- GENERATE CALENDAR ----------
 def generate_schedule(start_date, days=365):
 
-    events=[]
+    events = []
 
-    rotation_index=0
-    rotation_day=0
-    rotation_type,rotation_length=ROTATION[rotation_index]
+    rotation_index = 0
+    rotation_day = 0
+    rotation_type, rotation_length = ROTATION[rotation_index]
 
     for i in range(days):
 
-        current_date=start_date+timedelta(days=i)
+        current_date = start_date + timedelta(days=i)
 
-        hijri=Gregorian(
+        hijri = Gregorian(
             current_date.year,
             current_date.month,
             current_date.day
         ).to_hijri()
 
-        hijri_text=f"{hijri.day}/{hijri.month}"
+        hijri_text = f"{hijri.day}/{hijri.month}"
 
-        title=f"{rotation_type}{hijri_text}"
-        color=COLOR_MAP[rotation_type]
+        title = f"{rotation_type} | {hijri_text}"
+        color = COLOR_MAP[rotation_type]
 
         # Ramadan
-        if hijri.month==9:
-            title=f"{rotation_type}{hijri_text}"
-            color="#9c27b0"
+        if hijri.month == 9:
+            title = f"🌙 {rotation_type} | {hijri_text}"
+            color = "#9c27b0"
 
-        # Eid Al-Fitr
-        if hijri.month==10 and hijri.day<=3:
-            title=f"{rotation_type}{hijri_text}"
-            color="#4caf50"
+        # Eid Fitr
+        if hijri.month == 10 and hijri.day <= 3:
+            title = f"🎉 {rotation_type} | {hijri_text}"
+            color = "#4caf50"
 
-        # Eid Al-Adha
-        if hijri.month==12 and 10<=hijri.day<=13:
-            title=f"{rotation_type}{hijri_text}"
-            color="#2196f3"
+        # Eid Adha
+        if hijri.month == 12 and 10 <= hijri.day <= 13:
+            title = f"🐑 {rotation_type} | {hijri_text}"
+            color = "#2196f3"
 
         events.append({
-            "title":title,
-            "start":current_date.strftime("%Y-%m-%d"),
-            "color":color
+            "title": title,
+            "start": current_date.strftime("%Y-%m-%d"),
+            "color": color
         })
 
-        rotation_day+=1
+        rotation_day += 1
 
-        if rotation_day>=rotation_length:
-            rotation_index=(rotation_index+1)%len(ROTATION)
-            rotation_type,rotation_length=ROTATION[rotation_index]
-            rotation_day=0
+        if rotation_day >= rotation_length:
+            rotation_index = (rotation_index + 1) % len(ROTATION)
+            rotation_type, rotation_length = ROTATION[rotation_index]
+            rotation_day = 0
 
     return events
 
-events=generate_schedule(GROUPS[group_selected])
+events = generate_schedule(GROUPS[group_selected])
 
 # ---------- TODAY SHIFT ----------
-today=datetime.today()
-
-today_shift=get_shift_for_date(GROUPS[group_selected], today)
+today = datetime.today()
+today_shift = get_shift_for_date(GROUPS[group_selected], today)
 
 st.markdown(f"""
-<div style="background:#0f5132;color:white;padding:10px;border-radius:10px;
+<div style="background:#0f5132;color:white;padding:12px;border-radius:10px;
 font-size:18px;font-weight:bold;text-align:center;">
 Today Shift: {today_shift}
 </div>
@@ -155,19 +158,19 @@ Today Shift: {today_shift}
 
 st.write("")
 
-# ---------- DATE CHECK ----------
+# ---------- CHECK DATE ----------
 st.markdown("### Check Shift")
 
-selected_date=st.date_input("Select Date")
+selected_date = st.date_input("Select Date")
 
-shift_selected=get_shift_for_date(GROUPS[group_selected], selected_date)
+shift_selected = get_shift_for_date(GROUPS[group_selected], selected_date)
 
 st.success(f"Shift: {shift_selected}")
 
 # ---------- CALENDAR ----------
 calendar_options = {
 "initialView":"dayGridMonth",
-"height":700,
+"height":750,
 "headerToolbar":{
 "left":"prev,next today",
 "center":"title",
