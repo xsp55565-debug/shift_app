@@ -11,7 +11,7 @@ st.set_page_config(
 
 # ---------- LOGO ----------
 st.markdown("""
-<div style="text-align:center;padding:15px;border-radius:18px;background:black;
+<div style="text-align:center;padding:15px;border-radius:18px;background:white;
 width:220px;margin:auto;box-shadow:0px 4px 12px rgba(0,0,0,0.15);">
 <div style="font-size:48px;color:#1c3d8f;font-weight:bold;">حديد</div>
 <div style="font-size:24px;color:#f39200;font-weight:bold;">hadeed</div>
