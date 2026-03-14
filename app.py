@@ -8,9 +8,9 @@ st.set_page_config(page_title="Hadeed Shift", layout="wide")
 # ---------- LOGO ----------
 st.markdown("""
 <div style="text-align:center;padding:20px;border-radius:20px;background:white;
-width:260px;margin:auto;box-shadow:0px 6px 20px rgba(0,0,0,0.15);">
-<div style="font-size:55px;color:#1c3d8f;font-weight:bold;">حديد</div>
-<div style="font-size:30px;color:#f39200;font-weight:bold;">hadeed</div>
+width:240px;margin:auto;box-shadow:0px 6px 20px rgba(0,0,0,0.15);">
+<div style="font-size:50px;color:#1c3d8f;font-weight:bold;">حديد</div>
+<div style="font-size:28px;color:#f39200;font-weight:bold;">hadeed</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -25,19 +25,14 @@ font-size:14px;text-align:center;">
 <b>توضيح الألوان</b><br><br>
 
 <span style="background:#FFF176;padding:6px 10px;border-radius:8px;">Morning</span>
-&nbsp;
 <span style="background:#FFA500;padding:6px 10px;border-radius:8px;">Evening</span>
-&nbsp;
 <span style="background:#87CEEB;padding:6px 10px;border-radius:8px;">Night</span>
-&nbsp;
 <span style="background:#E0E0E0;padding:6px 10px;border-radius:8px;">OFF</span>
 
 <br><br>
 
 <span style="background:#9c27b0;color:white;padding:6px 10px;border-radius:8px;">🌙 Ramadan</span>
-&nbsp;
 <span style="background:#4caf50;color:white;padding:6px 10px;border-radius:8px;">🎉 Eid Al-Fitr</span>
-&nbsp;
 <span style="background:#2196f3;color:white;padding:6px 10px;border-radius:8px;">🐑 Eid Al-Adha</span>
 
 </div>
@@ -51,7 +46,7 @@ GROUPS = {
     "C": datetime(2026,1,25),
 }
 
-st.markdown("### Choose your group")
+st.markdown("### اختر مجموعتك")
 group_selected = st.selectbox("", list(GROUPS.keys()))
 
 # ---------- ROTATION ----------
@@ -78,6 +73,27 @@ SHIFT_SHORT = {
     "OFF":"OFF"
 }
 
+# ---------- FUNCTION ----------
+def get_shift_for_date(start_date, target_date):
+
+    rotation_index=0
+    rotation_day=0
+    rotation_type,rotation_length=ROTATION[rotation_index]
+
+    for i in range(2000):
+
+        date=start_date+timedelta(days=i)
+
+        if date.date()==target_date.date():
+            return rotation_type
+
+        rotation_day+=1
+
+        if rotation_day>=rotation_length:
+            rotation_index=(rotation_index+1)%len(ROTATION)
+            rotation_type,rotation_length=ROTATION[rotation_index]
+            rotation_day=0
+
 # ---------- GENERATE EVENTS ----------
 def generate_schedule(start_date, days=365):
 
@@ -99,22 +115,18 @@ def generate_schedule(start_date, days=365):
 
         hijri_text=f"{hijri.day}/{hijri.month}"
 
-        # الشفت فوق والهجري تحته
         title=f"{SHIFT_SHORT[rotation_type]}\n{hijri_text}"
 
         color=COLOR_MAP[rotation_type]
 
-        # رمضان
         if hijri.month==9:
             title=f"{SHIFT_SHORT[rotation_type]}\n🌙 {hijri_text}"
             color="#9c27b0"
 
-        # عيد الفطر
         if hijri.month==10 and hijri.day<=3:
             title=f"🎉 {SHIFT_SHORT[rotation_type]}\n{hijri_text}"
             color="#4caf50"
 
-        # عيد الأضحى
         if hijri.month==12 and 10<=hijri.day<=13:
             title=f"🐑 {SHIFT_SHORT[rotation_type]}\n{hijri_text}"
             color="#2196f3"
@@ -136,38 +148,27 @@ def generate_schedule(start_date, days=365):
 
 events=generate_schedule(GROUPS[group_selected])
 
-# ---------- TODAY SHIFT ----------
+# ---------- TODAY ----------
 today=datetime.today()
-
-rotation_index=0
-rotation_day=0
-rotation_type,rotation_length=ROTATION[rotation_index]
-
-today_shift=""
-
-for i in range(365):
-
-    date=GROUPS[group_selected]+timedelta(days=i)
-
-    if date.date()==today.date():
-        today_shift=rotation_type
-        break
-
-    rotation_day+=1
-
-    if rotation_day>=rotation_length:
-        rotation_index=(rotation_index+1)%len(ROTATION)
-        rotation_type,rotation_length=ROTATION[rotation_index]
-        rotation_day=0
+today_shift=get_shift_for_date(GROUPS[group_selected], today)
 
 st.markdown(f"""
 <div style="background:#0f5132;color:white;padding:14px;border-radius:10px;
 font-size:20px;font-weight:bold;text-align:center;">
-⭐ today shift: {today_shift}
+⭐ دوام اليوم: {today_shift}
 </div>
 """, unsafe_allow_html=True)
 
 st.write("")
+
+# ---------- DATE PICKER ----------
+st.markdown("### اعرف دوامك لأي تاريخ")
+
+selected_date=st.date_input("اختر التاريخ")
+
+shift_selected=get_shift_for_date(GROUPS[group_selected], selected_date)
+
+st.success(f"دوامك في هذا اليوم: {shift_selected}")
 
 # ---------- CALENDAR ----------
 calendar_options = {
