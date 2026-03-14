@@ -8,15 +8,44 @@ st.set_page_config(page_title="Hadeed Shift", layout="wide")
 # ---------- LOGO ----------
 st.markdown("""
 <div style="text-align:center;padding:20px;border-radius:20px;background:white;
-width:320px;margin:auto;box-shadow:0px 6px 20px rgba(0,0,0,0.15);">
-<div style="font-size:60px;color:#1c3d8f;font-weight:bold;">حديد</div>
-<div style="font-size:36px;color:#f39200;font-weight:bold;">hadeed</div>
+width:260px;margin:auto;box-shadow:0px 6px 20px rgba(0,0,0,0.15);">
+<div style="font-size:55px;color:#1c3d8f;font-weight:bold;">حديد</div>
+<div style="font-size:30px;color:#f39200;font-weight:bold;">hadeed</div>
 </div>
 """, unsafe_allow_html=True)
 
 st.write("")
 
-# ---------- GROUP SELECT ----------
+# ---------- COLOR LEGEND ----------
+st.markdown("""
+<div style="margin:auto;margin-top:10px;padding:12px;border-radius:12px;
+background:white;width:520px;box-shadow:0px 3px 12px rgba(0,0,0,0.1);
+font-size:14px;text-align:center;">
+
+<b>توضيح الألوان</b><br><br>
+
+<span style="background:#FFF176;padding:6px 10px;border-radius:8px;">Morning</span>
+&nbsp;
+<span style="background:#FFA500;padding:6px 10px;border-radius:8px;">Evening</span>
+&nbsp;
+<span style="background:#87CEEB;padding:6px 10px;border-radius:8px;">Night</span>
+&nbsp;
+<span style="background:#E0E0E0;padding:6px 10px;border-radius:8px;">OFF</span>
+
+<br><br>
+
+<span style="background:#9c27b0;color:white;padding:6px 10px;border-radius:8px;">🌙 Ramadan</span>
+&nbsp;
+<span style="background:#4caf50;color:white;padding:6px 10px;border-radius:8px;">🎉 Eid Al-Fitr</span>
+&nbsp;
+<span style="background:#2196f3;color:white;padding:6px 10px;border-radius:8px;">🐑 Eid Al-Adha</span>
+
+</div>
+""", unsafe_allow_html=True)
+
+st.write("")
+
+# ---------- GROUPS ----------
 GROUPS = {
     "B": datetime(2026,1,18),
     "C": datetime(2026,1,25),
@@ -70,13 +99,14 @@ def generate_schedule(start_date, days=365):
 
         hijri_text=f"{hijri.day}/{hijri.month}"
 
+        # الشفت فوق والهجري تحته
         title=f"{SHIFT_SHORT[rotation_type]}\n{hijri_text}"
 
         color=COLOR_MAP[rotation_type]
 
         # رمضان
         if hijri.month==9:
-            title=f"{SHIFT_SHORT[rotation_type]} 🌙\n{hijri_text}"
+            title=f"{SHIFT_SHORT[rotation_type]}\n🌙 {hijri_text}"
             color="#9c27b0"
 
         # عيد الفطر
@@ -131,8 +161,8 @@ for i in range(365):
         rotation_day=0
 
 st.markdown(f"""
-<div style="background:#0f5132;color:white;padding:15px;border-radius:12px;
-font-size:22px;font-weight:bold;text-align:center;">
+<div style="background:#0f5132;color:white;padding:14px;border-radius:10px;
+font-size:20px;font-weight:bold;text-align:center;">
 ⭐ دوام اليوم: {today_shift}
 </div>
 """, unsafe_allow_html=True)
