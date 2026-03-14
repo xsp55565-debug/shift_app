@@ -163,7 +163,7 @@ for i in range(365):
 st.markdown(f"""
 <div style="background:#0f5132;color:white;padding:14px;border-radius:10px;
 font-size:20px;font-weight:bold;text-align:center;">
-⭐ todayshift: {today_shift}
+⭐ today shift: {today_shift}
 </div>
 """, unsafe_allow_html=True)
 
