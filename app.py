@@ -31,9 +31,9 @@ box-shadow:0px 3px 10px rgba(0,0,0,0.1);font-size:12px;">
 <span style="background:#87CEEB;padding:4px 8px;border-radius:6px;">Night</span><br><br>
 <span style="background:#E0E0E0;padding:4px 8px;border-radius:6px;">OFF</span><br><br>
 
-<span style="background:#9c27b0;color:white;padding:4px 8px;border-radius:6px;">Ramadan</span><br><br>
-<span style="background:#4caf50;color:white;padding:4px 8px;border-radius:6px;">Eid Al-Fitr</span><br><br>
-<span style="background:#2196f3;color:white;padding:4px 8px;border-radius:6px;">Eid Al-Adha</span>
+<span style="background:#9c27b0;color:black;padding:4px 8px;border-radius:6px;">Ramadan</span><br><br>
+<span style="background:#4caf50;color:black;padding:4px 8px;border-radius:6px;">Eid Al-Fitr</span><br><br>
+<span style="background:#2196f3;color:black;padding:4px 8px;border-radius:6px;">Eid Al-Adha</span>
 
 </div>
 """, unsafe_allow_html=True)
