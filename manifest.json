@@ -1,0 +1,15 @@
+{
+  "name": "Hadeed Shift",
+  "short_name": "Shift",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1c3d8f",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/color/512/calendar.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
