@@ -23,6 +23,7 @@ width:220px;margin:auto;box-shadow:0px 4px 12px rgba(0,0,0,0.15);">
 </div>
 """, unsafe_allow_html=True)
 
+
 # ---------- LEGEND ----------
 st.markdown("""
 <div style="text-align:center;padding:10px;border-radius:12px;background:white;
@@ -45,33 +46,6 @@ box-shadow:0px 3px 10px rgba(0,0,0,0.1);font-size:12px;">
 
 st.write("")
 
-# ---------- GROUPS ----------
-GROUPS = {
-    "A": {
-        "start_date": datetime(2026, 9, 1),
-        "start_shift": "E"
-    },
-
-    "B": {
-        "start_date": datetime(2026, 1, 18),
-        "start_shift": "N"
-    },
-
-    "C": {
-        "start_date": datetime(2026, 1, 25),
-        "start_shift": "N"
-    },
-
-    "D": {
-        "start_date": datetime(2026, 9, 3),
-        "start_shift": "M"
-    }
-}
-
-group_selected = st.selectbox(
-    "Select Group",
-    list(GROUPS.keys())
-)
 
 # ---------- ROTATION ----------
 ROTATION = [
@@ -90,76 +64,150 @@ COLOR_MAP = {
     "OFF": "#A1A0A0"
 }
 
-# ---------- GET START ROTATION ----------
+
+# ---------- GROUPS ----------
+GROUPS = {
+    "A": {
+        "start_date": datetime(2026, 9, 1),
+        "start_shift": "E",
+        "reverse_cycle": True
+    },
+
+    "B": {
+        "start_date": datetime(2026, 1, 18),
+        "start_shift": "N",
+        "reverse_cycle": False
+    },
+
+    "C": {
+        "start_date": datetime(2026, 1, 25),
+        "start_shift": "N",
+        "reverse_cycle": False
+    },
+
+    "D": {
+        "start_date": datetime(2026, 9, 3),
+        "start_shift": "M",
+        "reverse_cycle": True
+    }
+}
+
+group_selected = st.selectbox(
+    "Select Group",
+    list(GROUPS.keys())
+)
+
+
+# ---------- START ROTATION INDEX ----------
 def get_start_index(start_shift):
+
     if start_shift == "N":
         return 0
-    elif start_shift == "E":
+
+    if start_shift == "E":
         return 2
-    elif start_shift == "M":
+
+    if start_shift == "M":
         return 4
 
 
-# ---------- SHIFT FUNCTION ----------
-def get_shift_for_date(start_date, start_shift, target_date):
+# ---------- GET SHIFT ----------
+def get_shift_for_date(group_name, target_date):
+
+    group = GROUPS[group_name]
+
+    start_date = group["start_date"].date()
 
     if isinstance(target_date, datetime):
         target_date = target_date.date()
 
-    start_date = start_date.date()
+    # =========================================================
+    # A و D:
+    # نحسب الدورة للخلف وللأمام من تاريخ البداية
+    # =========================================================
+    if group["reverse_cycle"]:
 
-    rotation_index = get_start_index(start_shift)
+        start_index = get_start_index(group["start_shift"])
+
+        # طول الدورة كاملة = 28 يوم
+        cycle_length = sum(length for shift, length in ROTATION)
+
+        # عدد الأيام من تاريخ البداية
+        days_difference = (target_date - start_date).days
+
+        # نحول اليوم إلى موقع داخل الدورة
+        cycle_day = days_difference % cycle_length
+
+        # نبدأ من الشفت المحدد للمجموعة
+        rotation_index = start_index
+
+        while True:
+
+            shift_type, shift_length = ROTATION[rotation_index]
+
+            if cycle_day < shift_length:
+                return shift_type
+
+            cycle_day -= shift_length
+
+            rotation_index = (rotation_index + 1) % len(ROTATION)
+
+    # =========================================================
+    # B و C:
+    # نفس النظام القديم
+    # =========================================================
+
+    # إذا التاريخ قبل بداية B أو C
+    if target_date < start_date:
+        return None
+
+    rotation_index = 0
     rotation_day = 0
 
     rotation_type, rotation_length = ROTATION[rotation_index]
 
-    # التاريخ يساوي أو بعد تاريخ البداية
-    if target_date >= start_date:
+    days_difference = (target_date - start_date).days
 
-        days_difference = (target_date - start_date).days
+    for _ in range(days_difference):
 
-        for _ in range(days_difference):
+        rotation_day += 1
 
-            rotation_day += 1
+        if rotation_day >= rotation_length:
 
-            if rotation_day >= rotation_length:
-                rotation_index = (rotation_index + 1) % len(ROTATION)
-                rotation_type, rotation_length = ROTATION[rotation_index]
-                rotation_day = 0
+            rotation_index = (
+                rotation_index + 1
+            ) % len(ROTATION)
 
-        return rotation_type
+            rotation_type, rotation_length = ROTATION[rotation_index]
 
-    # التاريخ قبل تاريخ البداية
-    else:
+            rotation_day = 0
 
-        days_difference = (start_date - target_date).days
-
-        for _ in range(days_difference):
-
-            rotation_day -= 1
-
-            if rotation_day < 0:
-                rotation_index = (rotation_index - 1) % len(ROTATION)
-                rotation_type, rotation_length = ROTATION[rotation_index]
-                rotation_day = rotation_length - 1
-
-        return rotation_type
+    return rotation_type
 
 
 # ---------- GENERATE CALENDAR ----------
-def generate_schedule(start_date, start_shift, days=365):
+def generate_schedule(group_name, days=730):
 
     events = []
 
-    rotation_index = get_start_index(start_shift)
-    rotation_day = 0
-
-    rotation_type, rotation_length = ROTATION[rotation_index]
+    # نبدأ من بداية 2026 حتى تظهر الأيام السابقة
+    # لـ A و D
+    calendar_start = datetime(2026, 1, 1)
 
     for i in range(days):
 
-        current_date = start_date + timedelta(days=i)
+        current_date = calendar_start + timedelta(days=i)
 
+        shift = get_shift_for_date(
+            group_name,
+            current_date
+        )
+
+        # إذا B أو C والتاريخ قبل بداية الجدول
+        if shift is None:
+            continue
+
+        # ---------- HIJRI ----------
         hijri = Gregorian(
             current_date.year,
             current_date.month,
@@ -168,22 +216,25 @@ def generate_schedule(start_date, start_shift, days=365):
 
         hijri_text = f"{hijri.day}/{hijri.month}"
 
-        title = f"{rotation_type}{hijri_text}"
-        color = COLOR_MAP[rotation_type]
+        title = f"{shift}{hijri_text}"
+        color = COLOR_MAP[shift]
 
-        # Ramadan
+        # ---------- RAMADAN ----------
         if hijri.month == 9:
-            title = f"{rotation_type}{hijri_text}"
+
+            title = f"{shift}{hijri_text}"
             color = "#9c27b0"
 
-        # Eid Fitr
+        # ---------- EID AL-FITR ----------
         if hijri.month == 10 and hijri.day <= 3:
-            title = f"{rotation_type}{hijri_text}"
+
+            title = f"{shift}{hijri_text}"
             color = "#4caf50"
 
-        # Eid Adha
+        # ---------- EID AL-ADHA ----------
         if hijri.month == 12 and 10 <= hijri.day <= 13:
-            title = f"{rotation_type}{hijri_text}"
+
+            title = f"{shift}{hijri_text}"
             color = "#2196f3"
 
         events.append({
@@ -192,13 +243,6 @@ def generate_schedule(start_date, start_shift, days=365):
             "color": color
         })
 
-        rotation_day += 1
-
-        if rotation_day >= rotation_length:
-            rotation_index = (rotation_index + 1) % len(ROTATION)
-            rotation_type, rotation_length = ROTATION[rotation_index]
-            rotation_day = 0
-
     return events
 
 
@@ -206,8 +250,7 @@ def generate_schedule(start_date, start_shift, days=365):
 group_data = GROUPS[group_selected]
 
 events = generate_schedule(
-    group_data["start_date"],
-    group_data["start_shift"]
+    group_selected
 )
 
 
@@ -215,10 +258,12 @@ events = generate_schedule(
 today = datetime.today()
 
 today_shift = get_shift_for_date(
-    group_data["start_date"],
-    group_data["start_shift"],
+    group_selected,
     today
 )
+
+if today_shift is None:
+    today_shift = "N/A"
 
 st.markdown(f"""
 <div style="background:#0f5132;color:white;padding:12px;border-radius:10px;
@@ -233,15 +278,20 @@ st.write("")
 # ---------- CHECK DATE ----------
 st.markdown("### Check Shift")
 
-selected_date = st.date_input("Select Date")
+selected_date = st.date_input(
+    "Select Date",
+    format="MM/DD/YYYY"
+)
 
 shift_selected = get_shift_for_date(
-    group_data["start_date"],
-    group_data["start_shift"],
+    group_selected,
     selected_date
 )
 
-st.success(f"Shift: {shift_selected}")
+if shift_selected is None:
+    st.success("Shift: N/A")
+else:
+    st.success(f"Shift: {shift_selected}")
 
 
 # ---------- CALENDAR ----------
