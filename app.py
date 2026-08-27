@@ -46,11 +46,6 @@ box-shadow:0px 3px 10px rgba(0,0,0,0.1);font-size:12px;">
 st.write("")
 
 # ---------- GROUPS ----------
-# start_shift:
-# N = Night
-# E = Evening
-# M = Morning
-
 GROUPS = {
     "A": {
         "start_date": datetime(2026, 9, 1),
@@ -95,30 +90,35 @@ COLOR_MAP = {
     "OFF": "#A1A0A0"
 }
 
+# ---------- GET START ROTATION ----------
+def get_start_index(start_shift):
+    if start_shift == "N":
+        return 0
+    elif start_shift == "E":
+        return 2
+    elif start_shift == "M":
+        return 4
+
+
 # ---------- SHIFT FUNCTION ----------
 def get_shift_for_date(start_date, start_shift, target_date):
 
     if isinstance(target_date, datetime):
         target_date = target_date.date()
 
-    # ترتيب بداية كل مجموعة داخل الدورة
-    shift_start_index = {
-        "N": 0,
-        "E": 2,
-        "M": 4
-    }
+    start_date = start_date.date()
 
-    rotation_index = shift_start_index[start_shift]
+    rotation_index = get_start_index(start_shift)
     rotation_day = 0
 
     rotation_type, rotation_length = ROTATION[rotation_index]
 
-    # نحسب إلى الأمام من تاريخ بداية المجموعة
-    if target_date >= start_date.date():
+    # التاريخ يساوي أو بعد تاريخ البداية
+    if target_date >= start_date:
 
-        current_date = start_date.date()
+        days_difference = (target_date - start_date).days
 
-        while current_date < target_date:
+        for _ in range(days_difference):
 
             rotation_day += 1
 
@@ -127,20 +127,14 @@ def get_shift_for_date(start_date, start_shift, target_date):
                 rotation_type, rotation_length = ROTATION[rotation_index]
                 rotation_day = 0
 
-            current_date += timedelta(days=1)
-
         return rotation_type
 
-    # إذا كان التاريخ قبل بداية المجموعة
-    # نحسب للخلف
+    # التاريخ قبل تاريخ البداية
     else:
 
-        rotation_index = shift_start_index[start_shift]
-        rotation_day = 0
+        days_difference = (start_date - target_date).days
 
-        current_date = start_date.date()
-
-        while current_date > target_date:
+        for _ in range(days_difference):
 
             rotation_day -= 1
 
@@ -148,8 +142,6 @@ def get_shift_for_date(start_date, start_shift, target_date):
                 rotation_index = (rotation_index - 1) % len(ROTATION)
                 rotation_type, rotation_length = ROTATION[rotation_index]
                 rotation_day = rotation_length - 1
-
-            current_date -= timedelta(days=1)
 
         return rotation_type
 
@@ -159,13 +151,7 @@ def generate_schedule(start_date, start_shift, days=365):
 
     events = []
 
-    shift_start_index = {
-        "N": 0,
-        "E": 2,
-        "M": 4
-    }
-
-    rotation_index = shift_start_index[start_shift]
+    rotation_index = get_start_index(start_shift)
     rotation_day = 0
 
     rotation_type, rotation_length = ROTATION[rotation_index]
@@ -224,6 +210,7 @@ events = generate_schedule(
     group_data["start_shift"]
 )
 
+
 # ---------- TODAY SHIFT ----------
 today = datetime.today()
 
@@ -242,6 +229,7 @@ Today Shift: {today_shift}
 
 st.write("")
 
+
 # ---------- CHECK DATE ----------
 st.markdown("### Check Shift")
 
@@ -254,6 +242,7 @@ shift_selected = get_shift_for_date(
 )
 
 st.success(f"Shift: {shift_selected}")
+
 
 # ---------- CALENDAR ----------
 calendar_options = {
