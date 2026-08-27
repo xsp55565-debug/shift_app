@@ -92,13 +92,15 @@ GROUPS = {
     }
 }
 
+
+# ---------- SELECT GROUP ----------
 group_selected = st.selectbox(
     "Select Group",
     list(GROUPS.keys())
 )
 
 
-# ---------- START ROTATION INDEX ----------
+# ---------- GET START INDEX ----------
 def get_start_index(start_shift):
 
     if start_shift == "N":
@@ -111,7 +113,7 @@ def get_start_index(start_shift):
         return 4
 
 
-# ---------- GET SHIFT ----------
+# ---------- SHIFT FUNCTION ----------
 def get_shift_for_date(group_name, target_date):
 
     group = GROUPS[group_name]
@@ -122,51 +124,60 @@ def get_shift_for_date(group_name, target_date):
         target_date = target_date.date()
 
     # =========================================================
-    # A و D:
-    # نحسب الدورة للخلف وللأمام من تاريخ البداية
+    # A و D
+    # نحسب الدورة للخلف والأمام من تاريخ البداية
     # =========================================================
     if group["reverse_cycle"]:
 
         start_index = get_start_index(group["start_shift"])
 
-        # طول الدورة كاملة = 28 يوم
-        cycle_length = sum(length for shift, length in ROTATION)
+        # مجموع الدورة = 28 يوم
+        cycle_length = sum(
+            length for shift, length in ROTATION
+        )
 
-        # عدد الأيام من تاريخ البداية
-        days_difference = (target_date - start_date).days
+        days_difference = (
+            target_date - start_date
+        ).days
 
-        # نحول اليوم إلى موقع داخل الدورة
+        # اليوم داخل الدورة
         cycle_day = days_difference % cycle_length
 
-        # نبدأ من الشفت المحدد للمجموعة
         rotation_index = start_index
 
         while True:
 
-            shift_type, shift_length = ROTATION[rotation_index]
+            shift_type, shift_length = ROTATION[
+                rotation_index
+            ]
 
             if cycle_day < shift_length:
                 return shift_type
 
             cycle_day -= shift_length
 
-            rotation_index = (rotation_index + 1) % len(ROTATION)
+            rotation_index = (
+                rotation_index + 1
+            ) % len(ROTATION)
 
     # =========================================================
-    # B و C:
-    # نفس النظام القديم
+    # B و C
+    # نفس نظام الكود الأصلي
     # =========================================================
 
-    # إذا التاريخ قبل بداية B أو C
     if target_date < start_date:
         return None
 
     rotation_index = 0
     rotation_day = 0
 
-    rotation_type, rotation_length = ROTATION[rotation_index]
+    rotation_type, rotation_length = ROTATION[
+        rotation_index
+    ]
 
-    days_difference = (target_date - start_date).days
+    days_difference = (
+        target_date - start_date
+    ).days
 
     for _ in range(days_difference):
 
@@ -178,7 +189,9 @@ def get_shift_for_date(group_name, target_date):
                 rotation_index + 1
             ) % len(ROTATION)
 
-            rotation_type, rotation_length = ROTATION[rotation_index]
+            rotation_type, rotation_length = ROTATION[
+                rotation_index
+            ]
 
             rotation_day = 0
 
@@ -190,8 +203,8 @@ def generate_schedule(group_name, days=730):
 
     events = []
 
-    # نبدأ من بداية 2026 حتى تظهر الأيام السابقة
-    # لـ A و D
+    # نبدأ من بداية 2026
+    # عشان A و D يظهر لهم الماضي
     calendar_start = datetime(2026, 1, 1)
 
     for i in range(days):
@@ -203,7 +216,7 @@ def generate_schedule(group_name, days=730):
             current_date
         )
 
-        # إذا B أو C والتاريخ قبل بداية الجدول
+        # B و C قبل بداية الجدول
         if shift is None:
             continue
 
@@ -247,8 +260,6 @@ def generate_schedule(group_name, days=730):
 
 
 # ---------- CURRENT GROUP ----------
-group_data = GROUPS[group_selected]
-
 events = generate_schedule(
     group_selected
 )
@@ -275,26 +286,122 @@ Today Shift: {today_shift}
 st.write("")
 
 
-# ---------- CHECK DATE ----------
+# =========================================================
+# CHECK SHIFT
+# =========================================================
 st.markdown("### Check Shift")
 
-selected_date = st.date_input(
-    "Select Date",
-    format="MM/DD/YYYY"
+# ---------- ENGLISH DATE SELECTOR ----------
+MONTHS = {
+    1: "January",
+    2: "February",
+    3: "March",
+    4: "April",
+    5: "May",
+    6: "June",
+    7: "July",
+    8: "August",
+    9: "September",
+    10: "October",
+    11: "November",
+    12: "December"
+}
+
+# تاريخ اليوم
+today_date = datetime.today().date()
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+
+    selected_year = st.selectbox(
+        "Year",
+        list(range(2025, 2031)),
+        index=list(range(2025, 2031)).index(
+            today_date.year
+        )
+    )
+
+with col2:
+
+    selected_month = st.selectbox(
+        "Month",
+        list(MONTHS.keys()),
+        format_func=lambda x: MONTHS[x],
+        index=today_date.month - 1
+    )
+
+with col3:
+
+    # عدد أيام الشهر
+    if selected_month == 12:
+        next_month = datetime(
+            selected_year + 1,
+            1,
+            1
+        )
+    else:
+        next_month = datetime(
+            selected_year,
+            selected_month + 1,
+            1
+        )
+
+    days_in_month = (
+        next_month -
+        datetime(
+            selected_year,
+            selected_month,
+            1
+        )
+    ).days
+
+    selected_day = st.selectbox(
+        "Day",
+        list(range(1, days_in_month + 1)),
+        index=min(
+            today_date.day - 1,
+            days_in_month - 1
+        )
+    )
+
+
+selected_date = datetime(
+    selected_year,
+    selected_month,
+    selected_day
+).date()
+
+
+# ---------- SHOW SELECTED DATE ----------
+st.caption(
+    f"Selected Date: "
+    f"{MONTHS[selected_month]} "
+    f"{selected_day}, "
+    f"{selected_year}"
 )
 
+
+# ---------- CHECK SHIFT ----------
 shift_selected = get_shift_for_date(
     group_selected,
     selected_date
 )
 
 if shift_selected is None:
+
     st.success("Shift: N/A")
+
 else:
-    st.success(f"Shift: {shift_selected}")
+
+    st.success(
+        f"Shift: {shift_selected}"
+    )
 
 
-# ---------- CALENDAR ----------
+# =========================================================
+# CALENDAR
+# =========================================================
 calendar_options = {
     "initialView": "dayGridMonth",
     "height": 750,
